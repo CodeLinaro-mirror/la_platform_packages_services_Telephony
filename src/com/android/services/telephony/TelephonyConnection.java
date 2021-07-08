@@ -960,6 +960,11 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         }
     }
 
+    @VisibleForTesting
+    protected TelephonyConnection() {
+        // Do nothing
+    }
+
     @Override
     public void onCallEvent(String event, Bundle extras) {
         switch (event) {
@@ -1292,6 +1297,8 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         Log.v(this, "performAnswer");
         if (isValidRingingCall() && getPhone() != null) {
             try {
+                mTelephonyConnectionService.maybeDisconnectCallsOnOtherSubs(
+                        getPhoneAccountHandle());
                 getPhone().acceptCall(videoState);
             } catch (CallStateException e) {
                 Log.e(this, e, "Failed to accept call.");
@@ -1628,6 +1635,12 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             extrasToRemove.add(QtiImsExtUtils.QTI_IMS_PHONE_ID_EXTRA_KEY);
             extrasToRemove.add(QtiImsExtUtils.EXTRA_TIR_OVERWRITE_ALLOWED);
             extrasToRemove.add(QtiCallConstants.ORIENTATION_MODE_EXTRA_KEY);
+            extrasToRemove.add(QtiCallConstants.EXTRAS_CALL_PROGRESS_INFO_TYPE);
+            extrasToRemove.add(QtiCallConstants.EXTRAS_CALL_PROGRESS_REASON_CODE);
+            extrasToRemove.add(QtiCallConstants.EXTRAS_CALL_PROGRESS_REASON_TEXT);
+            extrasToRemove.add(QtiCallConstants.EXTRA_CRS_TYPE);
+            extrasToRemove.add(QtiCallConstants.EXTRA_ORIGINAL_CALL_TYPE);
+            extrasToRemove.add(QtiCallConstants.EXTRA_IS_PREPARATORY);
         }
         if (originalConnection instanceof ImsPhoneConnection) {
             maybeConfigureDeviceToDeviceCommunication();
@@ -1792,11 +1805,18 @@ abstract class TelephonyConnection extends Connection implements Holdable,
     }
 
     private void maybeRemoveAnsweringDropsFgCallExtra() {
-        if(mOriginalConnection != null && mOriginalConnection.isActiveCallDisconnectedOnAnswer()
-                && mOriginalConnection.getState() !=  Call.State.INCOMING){
-            Log.v(TelephonyConnection.this, "maybeRemoveAnsweringDropsFgCallExtra removing extra");
-            removeExtras(Connection.EXTRA_ANSWERING_DROPS_FG_CALL);
+        if(mOriginalConnection == null || !mOriginalConnection.isActiveCallDisconnectedOnAnswer()) {
+            return;
         }
+
+        Call.State state = mOriginalConnection.getState();
+
+        if (state == Call.State.INCOMING || state == Call.State.WAITING) {
+            return;
+        }
+
+        Log.v(TelephonyConnection.this, "maybeRemoveAnsweringDropsFgCallExtra removing extra");
+        removeExtras(Connection.EXTRA_ANSWERING_DROPS_FG_CALL);
     }
 
     private int transformCodec(int codec) {
@@ -2131,6 +2151,15 @@ abstract class TelephonyConnection extends Connection implements Holdable,
      */
     protected boolean shouldTreatAsEmergencyCall() {
         return mTreatAsEmergencyCall;
+    }
+
+    /**
+     * Sets whether to treat this call as an emergency call or not.
+     * @param shouldTreatAsEmergencyCall
+     */
+    @VisibleForTesting
+    public void setShouldTreatAsEmergencyCall(boolean shouldTreatAsEmergencyCall) {
+        mTreatAsEmergencyCall = shouldTreatAsEmergencyCall;
     }
 
     /**
@@ -3466,6 +3495,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         if (!getPhone().getContext().getResources().getBoolean(
                 R.bool.config_use_device_to_device_communication)) {
             Log.i(this, "maybeConfigureDeviceToDeviceCommunication: not using D2D.");
+            notifyD2DAvailabilityChanged(false);
             return;
         }
         if (!isImsConnection()) {
@@ -3473,10 +3503,12 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             if (mCommunicator != null) {
                 mCommunicator = null;
             }
+            notifyD2DAvailabilityChanged(false);
             return;
         }
         if (mTreatAsEmergencyCall || mIsNetworkIdentifiedEmergencyCall) {
             Log.i(this, "maybeConfigureDeviceToDeviceCommunication: emergency call; no D2D");
+            notifyD2DAvailabilityChanged(false);
             return;
         }
 
@@ -3530,7 +3562,19 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             addTelephonyConnectionListener(mD2DCallStateAdapter);
         } else {
             Log.i(this, "maybeConfigureDeviceToDeviceCommunication: no transports; disabled.");
+            notifyD2DAvailabilityChanged(false);
         }
+    }
+
+    /**
+     * Notifies upper layers of the availability of D2D communication.
+     * @param isAvailable {@code true} if D2D is available, {@code false} otherwise.
+     */
+    private void notifyD2DAvailabilityChanged(boolean isAvailable) {
+        Bundle extras = new Bundle();
+        extras.putBoolean(Connection.EXTRA_IS_DEVICE_TO_DEVICE_COMMUNICATION_AVAILABLE,
+                isAvailable);
+        putTelephonyExtras(extras);
     }
 
     /**
@@ -3590,6 +3634,15 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             extras.putInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_VALUE, dcMsgValue);
             sendConnectionEvent(Connection.EVENT_DEVICE_TO_DEVICE_MESSAGE, extras);
         }
+    }
+
+    /**
+     * Handles report from {@link Communicator} when the availability of D2D changes.
+     * @param isAvailable {@code true} if D2D is available, {@code false} if unavailable.
+     */
+    @Override
+    public void onD2DAvailabilitychanged(boolean isAvailable) {
+        notifyD2DAvailabilityChanged(isAvailable);
     }
 
     /**
