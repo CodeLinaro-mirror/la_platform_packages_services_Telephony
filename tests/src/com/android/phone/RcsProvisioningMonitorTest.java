@@ -512,7 +512,7 @@ public class RcsProvisioningMonitorTest {
 
         mRcsProvisioningMonitor.updateConfig(FAKE_SUB_ID_BASE, null, false);
         processAllMessages();
-        assertFalse(mRcsProvisioningMonitor.isRcsVolteSingleRegistrationEnabled(FAKE_SUB_ID_BASE));
+        assertTrue(mRcsProvisioningMonitor.isRcsVolteSingleRegistrationEnabled(FAKE_SUB_ID_BASE));
 
         mRcsProvisioningMonitor.updateConfig(FAKE_SUB_ID_BASE, CONFIG_DEFAULT.getBytes(), false);
         processAllMessages();
@@ -521,7 +521,10 @@ public class RcsProvisioningMonitorTest {
         mRcsProvisioningMonitor.updateConfig(FAKE_SUB_ID_BASE,
                 CONFIG_SINGLE_REGISTRATION_DISABLED.getBytes(), false);
         processAllMessages();
-        assertFalse(mRcsProvisioningMonitor.isRcsVolteSingleRegistrationEnabled(FAKE_SUB_ID_BASE));
+        assertTrue(mRcsProvisioningMonitor.isRcsVolteSingleRegistrationEnabled(FAKE_SUB_ID_BASE));
+
+        assertNull(mRcsProvisioningMonitor.isRcsVolteSingleRegistrationEnabled(
+                FAKE_SUB_ID_BASE + 1));
     }
 
     @Test
@@ -572,6 +575,18 @@ public class RcsProvisioningMonitorTest {
         assertTrue(result);
         verify(mIImsConfig, times(1)).removeRcsConfigCallback(eq(mCallback));
         verify(mCallback, times(1)).onRemoved();
+    }
+
+    @Test
+    @SmallTest
+    public void testSendBroadcastWhenDmaChanged() throws Exception {
+        createMonitor(3);
+        verify(mPhone, times(3)).sendBroadcast(any(), any());
+
+        updateDefaultMessageApplication(DEFAULT_MESSAGING_APP2);
+        processAllMessages();
+
+        verify(mPhone, times(6)).sendBroadcast(any(), any());
     }
 
     @Test

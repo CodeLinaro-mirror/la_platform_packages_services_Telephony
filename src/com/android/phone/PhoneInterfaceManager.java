@@ -137,6 +137,7 @@ import android.util.Pair;
 import com.android.ims.ImsManager;
 import com.android.ims.internal.IImsServiceFeatureCallback;
 import com.android.ims.rcs.uce.eab.EabUtil;
+import com.android.internal.annotations.VisibleForTesting;
 import com.android.internal.telephony.CallForwardInfo;
 import com.android.internal.telephony.CallManager;
 import com.android.internal.telephony.CallStateException;
@@ -7215,11 +7216,10 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         try {
             if (!Objects.equals(mApp.getPackageManager().getPackageUid(callingPackage, 0),
                     Binder.getCallingUid())) {
-                throw new SecurityException("Package uid and package name do not match: "
-                        + "uid=" + Binder.getCallingUid() + ", packageName=" + callingPackage);
+                throw new SecurityException("Invalid package:" + callingPackage);
             }
         } catch (PackageManager.NameNotFoundException e) {
-            throw new SecurityException("Package name invalid:" + callingPackage);
+            throw new SecurityException("Invalid package:" + callingPackage);
         }
         RoleManager rm = mApp.getSystemService(RoleManager.class);
         List<String> dialerRoleHolders = rm.getRoleHolders(RoleManager.ROLE_DIALER);
@@ -7616,13 +7616,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                         getDefaultDataEnabled());
                 setNetworkSelectionModeAutomatic(subId);
                 Phone phone = getPhone(subId);
-                if (phone != null) {
-                    SubscriptionManager.setSubscriptionProperty(subId,
-                            SubscriptionManager.ALLOWED_NETWORK_TYPES,
-                            "user=" + RadioAccessFamily.getRafFromNetworkType(
-                                    RILConstants.PREFERRED_NETWORK_MODE));
-                    phone.loadAllowedNetworksFromSubscriptionDatabase();
-                }
+                cleanUpAllowedNetworkTypes(phone, subId);
                 setDataRoamingEnabled(subId, getDefaultDataRoamingEnabled(subId));
                 getPhone(subId).resetCarrierKeysForImsiEncryption();
             }
@@ -7651,6 +7645,21 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
+    }
+
+    @VisibleForTesting
+    void cleanUpAllowedNetworkTypes(Phone phone, int subId) {
+        if (phone == null || !SubscriptionManager.isUsableSubscriptionId(subId)) {
+            return;
+        }
+        long defaultNetworkType = RadioAccessFamily.getRafFromNetworkType(
+                RILConstants.PREFERRED_NETWORK_MODE);
+        SubscriptionManager.setSubscriptionProperty(subId,
+                SubscriptionManager.ALLOWED_NETWORK_TYPES,
+                "user=" + defaultNetworkType);
+        phone.loadAllowedNetworksFromSubscriptionDatabase();
+        phone.setAllowedNetworkTypes(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                defaultNetworkType, null);
     }
 
     private void cleanUpSmsRawTable(Context context) {
@@ -9836,6 +9845,24 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         return sThermalMitigationAllowlistedPackages;
     }
 
+    private boolean isAnyPhoneInEmergencyState() {
+        TelecomManager tm = mApp.getSystemService(TelecomManager.class);
+        if (tm.isInEmergencyCall()) {
+            Log.e(LOG_TAG , "Phone state is not valid. One of the phones is in an emergency call");
+            return true;
+        }
+        for (Phone phone : PhoneFactory.getPhones()) {
+            if (phone.isInEmergencySmsMode() || phone.isInEcm()) {
+                Log.e(LOG_TAG, "Phone state is not valid. isInEmergencySmsMode = "
+                    + phone.isInEmergencySmsMode() + " isInEmergencyCallbackMode = "
+                    + phone.isInEcm());
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Used by shell commands to add an authorized package name for thermal mitigation.
      * @param packageName name of package to be allowlisted
@@ -9918,8 +9945,6 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
 
                     TelecomAccountRegistry registry = TelecomAccountRegistry.getInstance(null);
                     if (registry != null) {
-                        TelephonyConnectionService service =
-                                registry.getTelephonyConnectionService();
                         Phone phone = getPhone(subId);
                         if (phone == null) {
                             thermalMitigationResult =
@@ -9927,19 +9952,14 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                             break;
                         }
 
-                        if (PhoneConstantConversions.convertCallState(phone.getState())
-                                    != TelephonyManager.CALL_STATE_IDLE
-                                    || phone.isInEmergencySmsMode() || phone.isInEcm()
-                                    || (service != null && service.isEmergencyCallPending())) {
-                            String errorMessage = "Phone state is not valid. call state = "
-                                    + PhoneConstantConversions.convertCallState(phone.getState())
-                                    + " isInEmergencySmsMode = " + phone.isInEmergencySmsMode()
-                                    + " isInEmergencyCallbackMode = " + phone.isInEcm();
-                            errorMessage += service == null
-                                    ? " TelephonyConnectionService is null"
-                                    : " isEmergencyCallPending = "
-                                            + service.isEmergencyCallPending();
-                            Log.e(LOG_TAG, errorMessage);
+                        TelephonyConnectionService service =
+                                registry.getTelephonyConnectionService();
+                        if (service != null && service.isEmergencyCallPending()) {
+                            Log.e(LOG_TAG, "An emergency call is pending");
+                            thermalMitigationResult =
+                                    TelephonyManager.THERMAL_MITIGATION_RESULT_INVALID_STATE;
+                            break;
+                        } else if (isAnyPhoneInEmergencyState()) {
                             thermalMitigationResult =
                                 TelephonyManager.THERMAL_MITIGATION_RESULT_INVALID_STATE;
                             break;
@@ -10084,9 +10104,13 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         try {
             RcsProvisioningMonitor rpm = RcsProvisioningMonitor.getInstance();
             if (rpm != null) {
-                return rpm.isRcsVolteSingleRegistrationEnabled(subId);
+                Boolean isCapable = rpm.isRcsVolteSingleRegistrationEnabled(subId);
+                if (isCapable != null) {
+                    return isCapable;
+                }
             }
-            return false;
+            throw new ServiceSpecificException(ImsException.CODE_ERROR_SERVICE_UNAVAILABLE,
+                    "service is temporarily unavailable.");
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
@@ -10405,6 +10429,21 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         final long identity = Binder.clearCallingIdentity();
         try {
             return EabUtil.getContactFromEab(getDefaultPhone().getContext(), contact);
+        } finally {
+            Binder.restoreCallingIdentity(identity);
+        }
+    }
+
+    /**
+     * Get the EAB capability from the EAB database.
+     */
+    @Override
+    public String getCapabilityFromEab(String contact) {
+        TelephonyPermissions.enforceShellOnly(Binder.getCallingUid(), "getCapabilityFromEab");
+        enforceModifyPermission();
+        final long identity = Binder.clearCallingIdentity();
+        try {
+            return EabUtil.getCapabilityFromEab(getDefaultPhone().getContext(), contact);
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
