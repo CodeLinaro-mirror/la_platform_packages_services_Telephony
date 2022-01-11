@@ -225,4 +225,10 @@
     <dimen name="dialpad_button_height">43dp</dimen>
     <dimen name="dialpad_button_width">43dp</dimen>
     <!-- End of Shortcut view vertical dimens. -->
+
+    <!-- The height and margin for emergency_action_group -->
+    <dimen name="emergency_dialer_action_group_height">64dp</dimen>
+    <dimen name="emergency_dialer_action_group_marginHorizontal">36dp</dimen>
+    <dimen name="emergency_dialer_action_group_marginTop">16dp</dimen>
+    <dimen name="emergency_dialer_action_group_marginBottom">24dp</dimen>
 </resources>
