@@ -94,6 +94,7 @@ import com.android.phone.callcomposer.CallComposerPictureTransfer;
 import com.android.telephony.Rlog;
 
 import org.codeaurora.ims.QtiCallConstants;
+import org.codeaurora.ims.QtiCallExtras;
 import org.codeaurora.ims.utils.QtiImsExtUtils;
 
 import java.util.ArrayList;
@@ -1716,6 +1717,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             extrasToRemove.add(QtiCallConstants.EXTRA_CRS_TYPE);
             extrasToRemove.add(QtiCallConstants.EXTRA_ORIGINAL_CALL_TYPE);
             extrasToRemove.add(QtiCallConstants.EXTRA_IS_PREPARATORY);
+            extrasToRemove.add(QtiCallExtras.EXTRAS_CALL_AUDIO_QUALITY);
         }
         if (originalConnection instanceof ImsPhoneConnection) {
             maybeConfigureDeviceToDeviceCommunication();
@@ -3997,6 +3999,15 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             set.add(new Communicator.Message(internalMessageType, internalMessageValue));
             mCommunicator.sendMessages(set);
         }
+    }
+
+    /**
+     * Returns the current telephony connection listeners for test purposes.
+     * @return list of telephony connection listeners.
+     */
+    @VisibleForTesting
+    public List<TelephonyConnectionListener> getTelephonyConnectionListeners() {
+        return new ArrayList<>(mTelephonyListeners);
     }
 
     /* Disables context based swap to make use of new DSDA hold APIs */

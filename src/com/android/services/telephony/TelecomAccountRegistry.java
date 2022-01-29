@@ -66,6 +66,7 @@ import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.PhoneFactory;
 import com.android.internal.telephony.RIL;
 import com.android.internal.telephony.SubscriptionController;
+import com.android.internal.telephony.util.QtiImsUtils;
 import com.android.phone.PhoneGlobals;
 import com.android.phone.PhoneUtils;
 import com.android.phone.R;
@@ -618,11 +619,15 @@ public class TelecomAccountRegistry {
         private boolean isCarrierVideoPresenceSupported() {
             PersistableBundle b =
                     PhoneGlobals.getInstance().getCarrierConfigForSubId(mPhone.getSubId());
-            boolean carrierConfigEnabled = b != null
-                    && (b.getBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL)
-                    || b.getBoolean(
-                    CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL));
-            return carrierConfigEnabled && isUserContactDiscoverySettingEnabled();
+            if (b == null) return false;
+
+            // If using the new RcsUceAdapter API, this should be true if
+            // KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL is set. If using the old
+            // KEY_USE_RCS_PRESENCE_BOOL key, we have to also check the user setting.
+            return b.getBoolean(
+                    CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL)
+                    || (b.getBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL)
+                    && isUserContactDiscoverySettingEnabled());
         }
 
         /**
@@ -920,8 +925,9 @@ public class TelecomAccountRegistry {
 
                 String[] supportedCountries = mContext.getResources().getStringArray(
                         R.array.config_simless_emergency_rtt_supported_countries);
-                if (supportedCountries == null || Arrays.stream(supportedCountries).noneMatch(
-                        Predicate.isEqual(country))) {
+                if ((supportedCountries == null || Arrays.stream(supportedCountries).noneMatch(
+                        Predicate.isEqual(country))) && !QtiImsUtils.isSimLessRttSupported(
+                        mPhone.getPhoneId(), mPhone.getContext())) {
                     Log.i(this, "isRttCurrentlySupported -- emergency acct and"
                             + " not supported in this country: " + country);
                     return false;
