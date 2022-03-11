@@ -69,11 +69,11 @@
             <!-- FrameLayout -->
             <com.android.phone.EmergencyActionGroup
                 android:id="@+id/emergency_action_group"
-                android:layout_height="64dp"
+                android:layout_height="@dimen/emergency_dialer_action_group_height"
                 android:layout_width="match_parent"
-                android:layout_marginHorizontal="36dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="24dp">
+                android:layout_marginHorizontal="@dimen/emergency_dialer_action_group_marginHorizontal"
+                android:layout_marginTop="@dimen/emergency_dialer_action_group_marginTop"
+                android:layout_marginBottom="@dimen/emergency_dialer_action_group_marginBottom">
 
                 <!-- Button that says: Emergency Information -->
                 <LinearLayout
