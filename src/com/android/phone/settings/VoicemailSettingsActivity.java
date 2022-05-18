@@ -16,6 +16,7 @@
 
 package com.android.phone.settings;
 
+import android.app.ActionBar;
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -340,7 +341,10 @@ public class VoicemailSettingsActivity extends PreferenceActivity
 
             final Dialog dialog = ((PreferenceScreen) preference).getDialog();
             if (dialog != null) {
-                dialog.getActionBar().setDisplayHomeAsUpEnabled(false);
+                final ActionBar actionBar = dialog.getActionBar();
+                if (actionBar != null) {
+                    actionBar.setDisplayHomeAsUpEnabled(false);
+                }
             }
 
             mSubMenuVoicemailSettings =
