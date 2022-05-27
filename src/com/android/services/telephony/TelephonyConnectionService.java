@@ -136,7 +136,7 @@ public class TelephonyConnectionService extends ConnectionService {
         }
     };
 
-    private final BroadcastReceiver mTtyBroadcastReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -148,6 +148,14 @@ public class TelephonyConnectionService extends ConnectionService {
                 boolean isTtyNowEnabled = newPreferredTtyMode != TelecomManager.TTY_MODE_OFF;
                 if (isTtyNowEnabled != mIsTtyEnabled) {
                     handleTtyModeChange(isTtyNowEnabled);
+                }
+            } else if (ACTION_MSIM_VOICE_CAPABILITY_CHANGED.equals(action)) {
+                // Add extra to call if answering this incoming call would cause an in progress
+                // call on another subscription to be disconnected.
+                Connection ringingConnection = getRingingConnection();
+                if (ringingConnection != null) {
+                    maybeIndicateAnsweringWillDisconnect((TelephonyConnection)ringingConnection,
+                            ringingConnection.getPhoneAccountHandle());
                 }
             }
         }
@@ -179,6 +187,8 @@ public class TelephonyConnectionService extends ConnectionService {
     @VisibleForTesting
     public Pair<WeakReference<TelephonyConnection>, Queue<Phone>> mEmergencyRetryCache;
     private DeviceState mDeviceState = new DeviceState();
+    private final String ACTION_MSIM_VOICE_CAPABILITY_CHANGED =
+        "org.codeaurora.intent.action.MSIM_VOICE_CAPABILITY_CHANGED";
 
     /**
      * Keeps track of the status of a SIM slot.
@@ -255,6 +265,7 @@ public class TelephonyConnectionService extends ConnectionService {
         boolean hasIccCard(int slotId);
         boolean isCurrentEmergencyNumber(String number);
         Map<Integer, List<EmergencyNumber>> getCurrentEmergencyNumberList();
+        boolean isConcurrentCallsPossible();
     }
 
     private TelephonyManagerProxy mTelephonyManagerProxy;
@@ -293,6 +304,11 @@ public class TelephonyConnectionService extends ConnectionService {
             } catch (IllegalStateException ise) {
                 return new HashMap<>();
             }
+        }
+
+        @Override
+        public boolean isConcurrentCallsPossible() {
+            return mTelephonyManager.isConcurrentCallsPossible();
         }
     }
 
@@ -599,12 +615,14 @@ public class TelephonyConnectionService extends ConnectionService {
 
         IntentFilter intentFilter = new IntentFilter(
                 TelecomManager.ACTION_TTY_PREFERRED_MODE_CHANGED);
-        registerReceiver(mTtyBroadcastReceiver, intentFilter);
+        intentFilter.addAction(ACTION_MSIM_VOICE_CAPABILITY_CHANGED);
+        registerReceiver(mBroadcastReceiver, intentFilter,
+                android.Manifest.permission.MODIFY_PHONE_STATE, null);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        unregisterReceiver(mTtyBroadcastReceiver);
+        unregisterReceiver(mBroadcastReceiver);
         return super.onUnbind(intent);
     }
 
@@ -759,7 +777,7 @@ public class TelephonyConnectionService extends ConnectionService {
             return;
         }
         // Pseudo DSDA use case
-        setupAnswerAndReleaseHandler(answerAndReleaseConnection, videoState);
+        setupAnswerAndReleaseHandler(answerAndReleaseConnection, videoState, false);
     }
 
     private Connection shallDisconnectOtherCalls() {
@@ -2107,7 +2125,13 @@ public class TelephonyConnectionService extends ConnectionService {
             Bundle connExtras = c.getExtras();
             Log.i(this, "retryOutgoingOriginalConnection, redialing on Phone Id: " + newPhoneToUse);
             c.clearOriginalConnection();
-            if (phoneId != newPhoneToUse.getPhoneId()) updatePhoneAccount(c, newPhoneToUse);
+            if (phoneId != newPhoneToUse.getPhoneId()) {
+                if (!mTelephonyManagerProxy.isConcurrentCallsPossible()) {
+                    disconnectAllCallsOnOtherSubs(
+                            mPhoneUtilsProxy.makePstnPhoneAccountHandle(newPhoneToUse));
+                }
+                updatePhoneAccount(c, newPhoneToUse);
+            }
             placeOutgoingConnection(c, newPhoneToUse, videoState, connExtras);
         } else {
             // We have run out of Phones to use. Disconnect the call and destroy the connection.
@@ -3130,6 +3154,21 @@ public class TelephonyConnectionService extends ConnectionService {
     }
 
     /**
+     * Checks to see if there is dialing call present on a sub other than the one passed in.
+     * @param incomingHandle The new incoming connection {@link PhoneAccountHandle}
+     */
+    private boolean isDialingCallPresentOnOtherSub(@NonNull PhoneAccountHandle incomingHandle) {
+        return getAllConnections().stream()
+                .filter(c ->
+                        // Exclude multiendpoint calls as they're not on this device.
+                        (c.getConnectionProperties() & Connection.PROPERTY_IS_EXTERNAL_CALL) == 0
+                        && c.getState() == Connection.STATE_DIALING
+                        // Include any calls not on same sub as current connection.
+                        && !Objects.equals(c.getPhoneAccountHandle(), incomingHandle))
+                .count() > 0;
+    }
+
+    /**
      * Checks to see if there are calls present on a sub other than the one passed in.
      * @param incomingHandle The new incoming connection {@link PhoneAccountHandle}
      */
@@ -3232,7 +3271,12 @@ public class TelephonyConnectionService extends ConnectionService {
                 connToAnswer.getExtras().getBoolean(
                     Connection.EXTRA_ANSWERING_DROPS_FG_CALL, false)) {
                 // Pseudo DSDA use case
-                setupAnswerAndReleaseHandler(connToAnswer, videoState);
+                setupAnswerAndReleaseHandler(connToAnswer, videoState, false);
+                return;
+            }
+            //DSDA mode, dialing call + incoming call, accept incoming call and release dialing call
+            if (isDialingCallPresentOnOtherSub(connToAnswer.getPhoneAccountHandle())) {
+                setupAnswerAndReleaseHandler(connToAnswer, videoState, true);
                 return;
             }
             // Get connection to hold if any
@@ -3258,9 +3302,10 @@ public class TelephonyConnectionService extends ConnectionService {
         }
     }
 
-    private void setupAnswerAndReleaseHandler(Connection conn, int videoState) {
+    private void setupAnswerAndReleaseHandler(Connection conn, int videoState,
+            boolean dsdaMode) {
         mAnswerAndReleaseHandler =
-            new AnswerAndReleaseHandler(conn, videoState);
+            new AnswerAndReleaseHandler(conn, videoState, dsdaMode);
         mAnswerAndReleaseHandler.addListener(mAnswerAndReleaseListener);
         mAnswerAndReleaseHandler.checkAndAnswer(getAllConnections(),
                 getAllConferences());
@@ -3447,6 +3492,25 @@ public class TelephonyConnectionService extends ConnectionService {
                                     tc.getTelecomCallId());
                             tc.hangup(android.telephony.DisconnectCause.LOCAL);
                         }
+                    }
+                });
+    }
+
+    private void disconnectAllCallsOnOtherSubs (@NonNull PhoneAccountHandle handle) {
+        Collection<Connection>connections = getAllConnections();
+        connections.stream()
+                .filter(c ->
+                        (c.getState() == Connection.STATE_ACTIVE
+                                || c.getState() == Connection.STATE_HOLDING)
+                                // Include any calls not on same sub as current connection.
+                                && !Objects.equals(c.getPhoneAccountHandle(), handle))
+                .forEach(c -> {
+                    if (c instanceof TelephonyConnection) {
+                        TelephonyConnection tc = (TelephonyConnection) c;
+                        Log.i(LOG_TAG, "disconnectAllCallsOnOtherSubs: disconnect" +
+                                " %s due to redial happened on other sub.",
+                                tc.getTelecomCallId());
+                        tc.hangup(android.telephony.DisconnectCause.LOCAL);
                     }
                 });
     }
