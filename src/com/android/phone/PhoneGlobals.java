@@ -28,6 +28,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.XmlResourceParser;
+import android.database.ContentObserver;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -45,6 +46,8 @@ import android.telecom.TelecomManager;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.AnomalyReporter;
 import android.telephony.CarrierConfigManager;
+import android.telephony.ims.ImsException;
+import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -67,6 +70,7 @@ import com.android.internal.telephony.SettingsObserver;
 import com.android.internal.telephony.TelephonyCapabilities;
 import com.android.internal.telephony.TelephonyComponentFactory;
 import com.android.internal.telephony.TelephonyIntents;
+import com.android.internal.telephony.data.DataEvaluation.DataDisallowedReason;
 import com.android.internal.telephony.dataconnection.DataConnectionReasons;
 import com.android.internal.telephony.dataconnection.DataConnectionReasons.DataDisallowedReasonType;
 import com.android.internal.telephony.ims.ImsResolver;
@@ -83,6 +87,7 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.NumberFormatException;
 import java.util.List;
 
 /**
@@ -125,6 +130,7 @@ public class PhoneGlobals extends ContextWrapper {
     private static final int EVENT_MOBILE_DATA_SETTINGS_CHANGED = 16;
     private static final int EVENT_CARRIER_CONFIG_CHANGED = 17;
     private static final int EVENT_DATA_CONNECTION_ATTACHED = 18;
+    private static final int EVENT_BACKUP_CALLING_SETTING_CHANGED = 19;
 
     // The MMI codes are also used by the InCallScreen.
     public static final int MMI_INITIATE = 51;
@@ -209,6 +215,8 @@ public class PhoneGlobals extends ContextWrapper {
 
     private final SettingsObserver mSettingsObserver;
     private BinderCallsStats.SettingsObserver mBinderCallsSettingsObserver;
+
+    private final BackupCallingSettingObserver mBackupCallingSettingObserver;
 
     private static class EventSimStateChangedBag {
         final int mPhoneId;
@@ -361,6 +369,10 @@ public class PhoneGlobals extends ContextWrapper {
                         Log.w(LOG_TAG, "phone object is null subId: " + subId);
                     }
                     break;
+                case EVENT_BACKUP_CALLING_SETTING_CHANGED:
+                    Log.d(LOG_TAG, "EVENT_BACKUP_CALLING_SETTING_CHANGED");
+                    notificationMgr.dismissBackupCallingNotification(msg.arg1);
+                    break;
             }
         }
     };
@@ -369,6 +381,7 @@ public class PhoneGlobals extends ContextWrapper {
         super(context);
         sMe = this;
         mSettingsObserver = new SettingsObserver(context, mHandler);
+        mBackupCallingSettingObserver = new BackupCallingSettingObserver();
     }
 
     public void onCreate() {
@@ -575,6 +588,7 @@ public class PhoneGlobals extends ContextWrapper {
 
     private void registerSettingsObserver() {
         mSettingsObserver.unobserve();
+        ContentResolver cr = getContentResolver();
         String dataRoamingSetting = Settings.Global.DATA_ROAMING;
         String mobileDataSetting = Settings.Global.MOBILE_DATA;
         if (TelephonyManager.getDefault().getSimCount() > 1) {
@@ -585,6 +599,22 @@ public class PhoneGlobals extends ContextWrapper {
             }
         }
 
+        // Unregistering first to avoid multiple registration as registerSettingsObserver() can be
+        // called multiple times.
+        cr.unregisterContentObserver(mBackupCallingSettingObserver);
+        // Listen for backup calling setting changes
+        SubscriptionManager subMgr = (SubscriptionManager) getSystemService(
+                Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        List<SubscriptionInfo> subList = subMgr.getActiveSubscriptionInfoList(true);
+        if (subList != null) {
+            for (SubscriptionInfo info : subList) {
+                int subId = info.getSubscriptionId();
+                Uri uri = Uri.withAppendedPath(SubscriptionManager.CROSS_SIM_ENABLED_CONTENT_URI,
+                        String.valueOf(subId));
+                cr.registerContentObserver(uri, false, mBackupCallingSettingObserver);
+            }
+        }
+
         // Listen for user data roaming setting changed event
         mSettingsObserver.observe(Settings.Global.getUriFor(dataRoamingSetting),
                 EVENT_DATA_ROAMING_SETTINGS_CHANGED);
@@ -592,6 +622,46 @@ public class PhoneGlobals extends ContextWrapper {
         // Listen for mobile data setting changed event
         mSettingsObserver.observe(Settings.Global.getUriFor(mobileDataSetting),
                 EVENT_MOBILE_DATA_SETTINGS_CHANGED);
+    }
+
+
+    private class BackupCallingSettingObserver extends ContentObserver {
+        BackupCallingSettingObserver() {
+            super(null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
+            if (uri == null) {
+                Log.e(LOG_TAG, "Uri null");
+                return;
+            }
+            int subId = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+            try {
+                subId = Integer.parseInt(uri.getLastPathSegment());
+            } catch (NumberFormatException ex) {
+                Log.e(LOG_TAG, "Uri's last segment not a number");
+                return;
+            }
+            ImsMmTelManager imsMmTelMgr = getImsMmTelManager(subId);
+            try {
+                if (!imsMmTelMgr.isCrossSimCallingEnabled()) {
+                    Log.d(LOG_TAG, "Backup calling disabled on sub " + subId);
+                    mHandler.obtainMessage(EVENT_BACKUP_CALLING_SETTING_CHANGED,
+                            subId, -1 /* Not used */).sendToTarget();
+                }
+            } catch (ImsException ex) {
+                Log.e(LOG_TAG, "Failed to get Backup calling's configuration", ex);
+            }
+        }
+    }
+
+    private static ImsMmTelManager getImsMmTelManager(int subId) {
+        if (!SubscriptionManager.isValidSubscriptionId(subId)) {
+            Log.e(LOG_TAG, "subId invalid");
+            return null;
+        }
+        return ImsMmTelManager.createForSubscriptionId(subId);
     }
 
     /**
@@ -883,11 +953,26 @@ public class PhoneGlobals extends ContextWrapper {
             return;
         }
 
-        DataConnectionReasons reasons = new DataConnectionReasons();
-        boolean dataAllowed = phone.isDataAllowed(ApnSetting.TYPE_DEFAULT, reasons);
-        mDataRoamingNotifLog.log("dataAllowed=" + dataAllowed + ", reasons=" + reasons);
-        if (VDBG) Log.v(LOG_TAG, "dataAllowed=" + dataAllowed + ", reasons=" + reasons);
-        if (!dataAllowed && reasons.containsOnly(DataDisallowedReasonType.ROAMING_DISABLED)) {
+        boolean dataAllowed;
+        boolean notAllowedDueToRoamingOff;
+        if (phone.isUsingNewDataStack()) {
+            List<DataDisallowedReason> reasons = phone.getDataNetworkController()
+                    .getInternetDataDisallowedReasons();
+            dataAllowed = reasons.isEmpty();
+            notAllowedDueToRoamingOff = (reasons.size() == 1
+                    && reasons.contains(DataDisallowedReason.ROAMING_DISABLED));
+            mDataRoamingNotifLog.log("dataAllowed=" + dataAllowed + ", reasons=" + reasons);
+            if (VDBG) Log.v(LOG_TAG, "dataAllowed=" + dataAllowed + ", reasons=" + reasons);
+        } else {
+            DataConnectionReasons reasons = new DataConnectionReasons();
+            dataAllowed = phone.isDataAllowed(ApnSetting.TYPE_DEFAULT, reasons);
+            notAllowedDueToRoamingOff = reasons.containsOnly(
+                    DataDisallowedReasonType.ROAMING_DISABLED);
+            mDataRoamingNotifLog.log("dataAllowed=" + dataAllowed + ", reasons=" + reasons);
+            if (VDBG) Log.v(LOG_TAG, "dataAllowed=" + dataAllowed + ", reasons=" + reasons);
+        }
+
+        if (!dataAllowed && notAllowedDueToRoamingOff) {
             // No need to show it again if we never cancelled it explicitly.
             if (mPrevRoamingNotification == ROAMING_NOTIFICATION_DISCONNECTED) return;
             // If the only reason of no data is data roaming disabled, then we notify the user
@@ -915,7 +1000,7 @@ public class PhoneGlobals extends ContextWrapper {
             // showed earlier.
             mPrevRoamingNotification = ROAMING_NOTIFICATION_NO_NOTIFICATION;
             Log.d(LOG_TAG, "Dismiss roaming notification");
-            mDataRoamingNotifLog.log("Hide. data allowed=" + dataAllowed + ", reasons=" + reasons);
+            mDataRoamingNotifLog.log("Hide. data allowed=" + dataAllowed);
             mHandler.sendEmptyMessage(EVENT_DATA_ROAMING_OK);
         }
     }

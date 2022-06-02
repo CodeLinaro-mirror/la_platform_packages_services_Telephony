@@ -2021,6 +2021,8 @@
     <!-- In-call screen: error message shown when the user attempts to place a call, but calling has
          been disabled using a debug property. -->
     <string name="callFailed_too_many_calls">Cannot place a call as there are already two calls in progress.  Disconnect one of the calls or merge them into a conference prior to placing a new call.</string>
+    <!-- In-call screen: error message shown when the user attempts to place a call in Secure Mode -->
+    <string name="callFailed_secure_mode">Cannot place a non-emergency call in Secure Mode.</string>
     <!-- Message displayed to the user when they attempt to edit options for a supplementary service
          (call waiting, call barring, call forwarding, and caller ID), but they are required to
          enable mobile data first. -->
@@ -2198,6 +2200,8 @@
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
     <string name="radio_info_data_network_type_label">Data Network Type:</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
+    <string name="radio_info_override_network_type_label">Override Network Type:</string>
+    <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
     <string name="phone_index_label">Select phone index</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
     <string name="radio_info_set_perferred_label">Set Preferred Network Type:</string>
@@ -2220,17 +2224,17 @@
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
     <string name="oem_radio_info_label">OEM-specific Info/Settings</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
-    <string name="radio_info_endc_available">EN-DC Available:</string>
+    <string name="radio_info_endc_available">EN-DC Available (NSA):</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
-    <string name="radio_info_dcnr_restricted">DCNR Restricted:</string>
+    <string name="radio_info_dcnr_restricted">DCNR Restricted (NSA):</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
-    <string name="radio_info_nr_available">NR Available:</string>
+    <string name="radio_info_nr_available">NR Available (NSA):</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
-    <string name="radio_info_nr_state">NR State:</string>
+    <string name="radio_info_nr_state">NR State (NSA):</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
     <string name="radio_info_nr_frequency">NR Frequency:</string>
     <!-- Radio Info screen. Label for a status item.  Used for diagnostic info screens, precise translation isn't needed -->
-    <string name="radio_info_network_slicing_config" translatable="false">Network slicing config:</string>
+    <string name="radio_info_network_slicing_config" translatable="false">Network Slicing Config:</string>
 
     <!-- Band Mode Selection -->
     <!-- Band mode screen.  Title of activity. -->
@@ -2264,21 +2268,15 @@
     <!-- Telephony notification channel name for a channel containing SIP accounts removed
      notificatios -->
     <string name="notification_channel_sip_account">Deprecated SIP accounts</string>
-
-    <!-- Instruction text to notify user that emergency calls may not be possible when voice is
-    enabled over wifi. [CHAR LIMIT=NONE] -->
-    <string name="limited_service_alert_dialog_description"><xliff:g id="spn" example="Operator">%s</xliff:g> doesn\'t support emergency calls over Wi-Fi.
-\n\nEmergency calls will be placed through a mobile network. If there\'s limited mobile coverage,
- your emergency call may not go through.
-</string>
-    <!-- Option to hide the popup dialog if it is not necessary for the user. [CHAR LIMIT=40] -->
-    <string name="do_not_show_again">Don\'t show again</string>
-    <!-- Option to turn off wifi calling -->
-    <string name="turn_off_wfc">Turn off Wi-Fi calling</string>
-    <string name="unavailable_emergency_calls_notification_name">Emergency calls may be unavailable</string>
-
     <string name="labelCommonMore">Call settings</string>
     <string name="labelCommonMore_with_label">Call settings (<xliff:g id="subscriptionlabel" example="T-Mobile">%s</xliff:g>)</string>
     <string name="sum_common_call_settings">Additional call settings</string>
     <string name="ut_unavailable_to_set_video_cf_toast">UT is unavailable to set call forwarding for video, please close this page and exit.</string>
+
+    <!-- Backup Calling exit notification -->
+    <string name="c_iwlan_exit_notification_title">Voice Over Cellular Internet unavailable</string>
+    <string name="c_iwlan_exit_notification_description">Disabling it might help acquire service.</string>
+    <string name="c_iwlan_exit_notification_positive_button">OPEN SETTINGS</string>
+    <string name="c_iwlan_exit_notification_negative_button">DISMISS</string>
+    <string name="c_iwlan_channel_name">C_IWLAN</string>
 </resources>
