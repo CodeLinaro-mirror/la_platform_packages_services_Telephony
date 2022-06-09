@@ -23,6 +23,7 @@ import android.app.ListActivity;
 import android.content.AsyncQueryHandler;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -77,10 +78,15 @@ public class ADNList extends ListActivity {
 
     protected int mInitialSelection = -1;
 
+    private boolean mFeatureWatch = false;
+
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        mFeatureWatch = getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+        if (!mFeatureWatch) {
+            getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        }
         setContentView(R.layout.adn_list);
         mEmptyText = (TextView) findViewById(android.R.id.empty);
         mQueryHandler = new QueryHandler(getContentResolver());
@@ -194,9 +200,11 @@ public class ADNList extends ListActivity {
 
         mEmptyText.setText(loading ? R.string.simContacts_emptyLoading:
                 R.string.simContacts_empty);
-        getWindow().setFeatureInt(
-                Window.FEATURE_INDETERMINATE_PROGRESS,
-                loading ? PROGRESS_VISIBILITY_ON : PROGRESS_VISIBILITY_OFF);
+        if (!mFeatureWatch) {
+            getWindow().setFeatureInt(
+                    Window.FEATURE_INDETERMINATE_PROGRESS,
+                    loading ? PROGRESS_VISIBILITY_ON : PROGRESS_VISIBILITY_OFF);
+        }
     }
 
     private class QueryHandler extends AsyncQueryHandler {
