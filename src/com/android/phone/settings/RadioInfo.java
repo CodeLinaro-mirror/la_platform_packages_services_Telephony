@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
@@ -64,6 +65,7 @@ import android.telephony.DataSpecificRegistrationInfo;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhysicalChannelConfig;
 import android.telephony.RadioAccessFamily;
+import android.telephony.Rlog;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SubscriptionManager;
@@ -96,6 +98,7 @@ import com.android.ims.ImsException;
 import com.android.ims.ImsManager;
 import com.android.internal.telephony.Phone;
 import com.android.internal.telephony.PhoneFactory;
+import com.android.internal.telephony.euicc.EuiccConnector;
 import com.android.phone.R;
 
 import java.io.IOException;
@@ -109,6 +112,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.qti.extphone.ExtTelephonyManager;
+import com.qti.extphone.QtiImeiInfo;
+import com.qti.extphone.ServiceCallback;
 /**
  * Radio Information Class
  *
@@ -162,6 +168,8 @@ public class RadioInfo extends AppCompatActivity {
 
     private static final int sCellInfoListRateDisabled = Integer.MAX_VALUE;
     private static final int sCellInfoListRateMax = 0;
+
+    private ExtTelephonyManager mExtTelephonyManager = null;
 
     private static final String OEM_RADIO_INFO_INTENT =
             "com.android.phone.settings.OEM_RADIO_INFO";
@@ -225,6 +233,9 @@ public class RadioInfo extends AppCompatActivity {
     private static final String TRIGGER_CARRIER_PROVISIONING_ACTION =
             "com.android.phone.settings.TRIGGER_CARRIER_PROVISIONING";
 
+    private static final String ACTION_REMOVABLE_ESIM_AS_DEFAULT =
+            "android.telephony.euicc.action.REMOVABLE_ESIM_AS_DEFAULT";
+
     private TextView mDeviceId; //DeviceId is the IMEI in GSM and the MEID in CDMA
     private TextView mLine1Number;
     private TextView mSubscriptionId;
@@ -273,6 +284,7 @@ public class RadioInfo extends AppCompatActivity {
     private Switch mEabProvisionedSwitch;
     private Switch mCbrsDataSwitch;
     private Switch mDsdsSwitch;
+    private Switch mRemovableEsimSwitch;
     private Spinner mPreferredNetworkType;
     private Spinner mSelectPhoneIndex;
     private Spinner mCellInfoRefreshRateSpinner;
@@ -297,6 +309,7 @@ public class RadioInfo extends AppCompatActivity {
     private int mPreferredNetworkTypeResult;
     private int mCellInfoRefreshRateIndex;
     private int mSelectedPhoneIndex;
+    private boolean isExtServiceConnected = false;
 
     private final NetworkRequest mDefaultNetworkRequest = new NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
@@ -573,6 +586,13 @@ public class RadioInfo extends AppCompatActivity {
             mDsdsSwitch.setVisibility(View.GONE);
         }
 
+        mRemovableEsimSwitch = (Switch) findViewById(R.id.removable_esim_switch);
+        if (!IS_USER_BUILD) {
+            mRemovableEsimSwitch.setEnabled(true);
+            mRemovableEsimSwitch.setChecked(mTelephonyManager.isRemovableEsimDefaultEuicc());
+            mRemovableEsimSwitch.setOnCheckedChangeListener(mRemovableEsimChangeListener);
+        }
+
         mRadioPowerOnSwitch = (Switch) findViewById(R.id.radio_power);
 
         mDownlinkKbps = (TextView) findViewById(R.id.dl_kbps);
@@ -623,6 +643,11 @@ public class RadioInfo extends AppCompatActivity {
         }).start();
 
         restoreFromBundle(icicle);
+
+        mExtTelephonyManager = ExtTelephonyManager.getInstance(this);
+        mExtTelephonyManager.connectService(mServiceCallback);
+        Log.d(TAG, "Connect to ExtTelephony bound service...");
+
     }
 
     @Override
@@ -642,6 +667,56 @@ public class RadioInfo extends AppCompatActivity {
         log("Started onResume");
 
         updateAllFields();
+        updateImei();
+    }
+
+    private ServiceCallback mServiceCallback = new ServiceCallback() {
+
+        @Override
+        public void onConnected() {
+          Log.d(TAG, "ExtTelephony Service connected");
+          isExtServiceConnected = true;
+          //get imei
+          updateImei();
+        }
+
+        @Override
+        public void onDisconnected() {
+            Log.d(TAG, "ExtTelephony Service disconnected...");
+            isExtServiceConnected = false;
+        }
+    };
+
+    private void updateImei() {
+        int slotId = SubscriptionManager.getPhoneId(mPhone.getSubId());
+        String imei = null;
+
+        if (isExtServiceConnected) {
+            QtiImeiInfo[] qtiImeiInfo = mExtTelephonyManager.getImeiInfo();
+
+            if (qtiImeiInfo != null) {
+                for (int i = 0; i < qtiImeiInfo.length; i++) {
+                  if (null != qtiImeiInfo[i] &&
+                          qtiImeiInfo[i].getSlotId() == slotId) {
+                      imei = qtiImeiInfo[i].getImei();
+                      Rlog.pii(TAG, "getImei: " + imei + " on slot" + slotId);
+                  }
+                }
+            }
+        }
+
+        if (TextUtils.isEmpty(imei)){
+            if (mPhone != null) {
+                imei = mPhone.getImei();
+                Rlog.pii(TAG, "phone getImei on slot " + slotId + ": " + imei);
+            }
+        }
+
+        if (TextUtils.isEmpty(imei)) {
+            mDeviceId.setText(R.string.radioInfo_unknown);
+        } else {
+            mDeviceId.setText(imei);
+        }
     }
 
     private void updateAllFields() {
@@ -798,6 +873,9 @@ public class RadioInfo extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mQueuedWork.shutdown();
+        if (mExtTelephonyManager != null && mServiceCallback != null) {
+            mExtTelephonyManager.disconnectService(mServiceCallback);
+        }
     }
 
     // returns array of string labels for each phone index. The array index is equal to the phone
@@ -1208,10 +1286,6 @@ public class RadioInfo extends AppCompatActivity {
     private void updateProperties() {
         String s;
         Resources r = getResources();
-
-        s = mPhone.getDeviceId();
-        if (s == null) s = r.getString(R.string.radioInfo_unknown);
-        mDeviceId.setText(s);
 
         s = mPhone.getSubscriberId();
         if (s == null) s = r.getString(R.string.radioInfo_unknown);
@@ -1770,6 +1844,7 @@ public class RadioInfo extends AppCompatActivity {
                 mSelectedPhoneIndex = phoneIndex;
 
                 updatePhoneIndex(phoneIndex, subId);
+                updateImei();
             }
         }
 
@@ -1877,4 +1952,27 @@ public class RadioInfo extends AppCompatActivity {
             }
         }
     };
+
+    OnCheckedChangeListener mRemovableEsimChangeListener = new OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            setRemovableEsimAsDefaultEuicc(isChecked);
+        }
+    };
+
+    private void setRemovableEsimAsDefaultEuicc(boolean isChecked) {
+        Log.d(TAG, "setRemovableEsimAsDefaultEuicc isChecked: " + isChecked);
+        mTelephonyManager.setRemovableEsimAsDefaultEuicc(isChecked);
+        // TODO(b/232528117): Instead of sending intent, add new APIs in platform,
+        //  LPA can directly use the API.
+        ComponentInfo componentInfo = EuiccConnector.findBestComponent(getPackageManager());
+        if (componentInfo == null) {
+            Log.d(TAG, "setRemovableEsimAsDefaultEuicc: unable to find suitable component info");
+            return;
+        }
+        final Intent intent = new Intent(ACTION_REMOVABLE_ESIM_AS_DEFAULT);
+        intent.setPackage(componentInfo.packageName);
+        intent.putExtra("isDefault", isChecked);
+        sendBroadcast(intent);
+    }
 }
