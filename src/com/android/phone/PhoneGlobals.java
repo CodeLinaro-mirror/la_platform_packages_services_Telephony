@@ -13,6 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ /* Changes from Qualcomm Innovation Center are provided under the following license:
+  *
+  * Copyright (c) 2023 Qualcomm Innovation Center, Inc. All rights reserved.
+  * SPDX-License-Identifier: BSD-3-Clause-Clear
+  */
 
 package com.android.phone;
 
@@ -117,6 +122,8 @@ public class PhoneGlobals extends ContextWrapper {
     private static final boolean DBG =
             (PhoneGlobals.DBG_LEVEL >= 1) && (SystemProperties.getInt("ro.debuggable", 0) == 1);
     private static final boolean VDBG = (PhoneGlobals.DBG_LEVEL >= 2);
+
+    private static boolean mIsBike = SystemProperties.getBoolean("ro.hw.vehicle.isbike", false);
 
     // Message codes; see mHandler below.
     private static final int EVENT_SIM_NETWORK_LOCKED = 3;
@@ -446,7 +453,7 @@ public class PhoneGlobals extends ContextWrapper {
                         }
                     }
                 }
-                RcsProvisioningMonitor.make(this);
+                if (!mIsBike) RcsProvisioningMonitor.make(this);
             }
 
             // Start TelephonyDebugService After the default phone is created.
@@ -483,14 +490,16 @@ public class PhoneGlobals extends ContextWrapper {
 
             phoneMgr = PhoneInterfaceManager.init(this);
 
-            imsRcsController = ImsRcsController.init(this);
+            if (!mIsBike) {
+               imsRcsController = ImsRcsController.init(this);
 
-            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY_IMS)) {
-                mTelephonyRcsService = new TelephonyRcsService(this,
-                        PhoneFactory.getPhones().length);
-                mTelephonyRcsService.initialize();
-                imsRcsController.setRcsService(mTelephonyRcsService);
-            }
+               if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY_IMS)) {
+                   mTelephonyRcsService = new TelephonyRcsService(this,
+                           PhoneFactory.getPhones().length);
+                   mTelephonyRcsService.initialize();
+                   imsRcsController.setRcsService(mTelephonyRcsService);
+               }
+            } // mIsBike check ends
 
             configLoader = CarrierConfigLoader.init(this);
 
