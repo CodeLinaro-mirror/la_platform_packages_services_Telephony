@@ -92,6 +92,7 @@ import com.android.internal.telephony.satellite.SatelliteController;
 import com.android.internal.telephony.satellite.SatelliteSOSMessageRecommender;
 import com.android.internal.telephony.subscription.SubscriptionInfoInternal;
 import com.android.internal.telephony.subscription.SubscriptionManagerService;
+import com.android.internal.telephony.UUSInfo;
 import com.android.phone.FrameworksUtils;
 import com.android.phone.MMIDialogActivity;
 import com.android.phone.PhoneUtils;
@@ -101,6 +102,7 @@ import com.android.phone.callcomposer.CallComposerPictureManager;
 import com.android.phone.settings.SuppServicesUiUtil;
 
 import java.lang.ref.WeakReference;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -2893,7 +2895,35 @@ public class TelephonyConnectionService extends ConnectionService {
                                connection.getPhoneAccountHandle())) {
                     // Same sub hold and dial or dial without hold use case
                     // Follow legacy behavior
-                    originalConnection = phone.dial(number, new ImsPhone.ImsDialArgs.Builder()
+                    //Ecall : Add MSD to UUsinfo
+
+                    if (extras.containsKey(TelecomManager.EXTRA_ECALL_MSD)) {
+                        int eccCategory = EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_UNSPECIFIED;
+                        String fullMSDStr = extras.getString(TelecomManager.EXTRA_ECALL_MSD);
+                        Log.i(this, "ECall EXTRA_OUTGOING_CALL_EXTRAS is present so pull MSD");
+                        String[] MSDStrArray = fullMSDStr.split("-");
+                        String eccCategoryStr = MSDStrArray[0];
+                        try {
+                            eccCategory = Integer.parseInt(eccCategoryStr);
+                        } catch (NumberFormatException e) {
+                            Log.e(this, e, "ECall eccCategory parse exception: " + e);
+                        } finally {
+                            if (eccCategory == EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_UNSPECIFIED) {
+                                Log.i(this, "ECall using default eccCategory MIEC");
+                                eccCategory = EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_MIEC;
+                            }
+                        }
+                        UUSInfo uusinfo = new UUSInfo();
+                        uusinfo.setUserData(fullMSDStr.getBytes(StandardCharsets.UTF_8));
+                        originalConnection = phone.dial(number, new ImsPhone.ImsDialArgs.Builder()
+                            .setIntentExtras(extras)
+                            .setUusInfo(uusinfo)
+                            .setEccCategory(eccCategory)
+                            .setRttTextStream(connection.getRttTextStream())
+                            .build(),
+                        connection::registerForCallEvents);
+                    } else {
+                        originalConnection = phone.dial(number, new ImsPhone.ImsDialArgs.Builder()
                         .setVideoState(videoState)
                         .setIntentExtras(extras)
                         .setRttTextStream(connection.getRttTextStream())
@@ -2901,6 +2931,7 @@ public class TelephonyConnectionService extends ConnectionService {
                         // We need to wait until the phone has been chosen in GsmCdmaPhone to
                         // register for the associated TelephonyConnection call event listeners.
                         connection::registerForCallEvents);
+                    }
 
                 } else {
                     // DSDA use case: MO call and ACTIVE call are on different SUBs
