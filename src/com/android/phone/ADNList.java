@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.SystemProperties;
 import android.text.BidiFormatter;
 import android.text.TextDirectionHeuristics;
 import android.util.Log;
@@ -80,7 +81,11 @@ public class ADNList extends ListActivity {
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        boolean isQcomWatch = SystemProperties.getBoolean(
+                           "ro.product.qti.qcom_watch", false);
+        if (!isQcomWatch) {
+           getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        }
         setContentView(R.layout.adn_list);
         mEmptyText = (TextView) findViewById(android.R.id.empty);
         mQueryHandler = new QueryHandler(getContentResolver());

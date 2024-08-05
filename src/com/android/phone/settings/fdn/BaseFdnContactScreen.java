@@ -30,6 +30,7 @@ import android.os.AsyncResult;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.view.Window;
 import android.widget.Toast;
@@ -70,7 +71,11 @@ public abstract class BaseFdnContactScreen extends Activity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         resolveIntent();
-        getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        boolean isQcomWatch = SystemProperties.getBoolean(
+                           "ro.product.qti.qcom_watch", false);
+        if (!isQcomWatch) {
+           getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+        }
     }
 
     protected void authenticatePin2() {
