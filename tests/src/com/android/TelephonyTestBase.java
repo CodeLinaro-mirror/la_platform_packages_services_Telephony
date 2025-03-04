@@ -24,9 +24,7 @@ import static org.mockito.Mockito.doReturn;
 import android.content.ContextWrapper;
 import android.content.res.Resources;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.TestLooperManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -39,7 +37,6 @@ import com.android.internal.telephony.data.DataConfigManager;
 import com.android.internal.telephony.data.DataNetworkController;
 import com.android.internal.telephony.metrics.MetricsCollector;
 import com.android.internal.telephony.metrics.PersistAtomsStorage;
-import com.android.internal.telephony.satellite.SatelliteController;
 import com.android.phone.PhoneGlobals;
 import com.android.phone.PhoneInterfaceManager;
 
@@ -72,10 +69,6 @@ public class TelephonyTestBase {
     @Mock protected DataNetworkController mDataNetworkController;
     @Mock private MetricsCollector mMetricsCollector;
 
-    private HandlerThread mTestHandlerThread;
-    protected Looper mTestLooper;
-    protected TestLooperManager mLooperManager;
-
     private final HashMap<InstanceKey, Object> mOldInstances = new HashMap<>();
     private final LinkedList<InstanceKey> mInstanceKeys = new LinkedList<>();
 
@@ -87,9 +80,6 @@ public class TelephonyTestBase {
 
         doCallRealMethod().when(mPhoneGlobals).getBaseContext();
         doCallRealMethod().when(mPhoneGlobals).getResources();
-        doCallRealMethod().when(mPhoneGlobals).getSystemService(Mockito.anyString());
-        doCallRealMethod().when(mPhoneGlobals).getSystemService(Mockito.any(Class.class));
-        doCallRealMethod().when(mPhoneGlobals).getSystemServiceName(Mockito.any(Class.class));
         doCallRealMethod().when(mPhone).getServiceState();
 
         mContext = spy(new TestContext());
@@ -106,8 +96,6 @@ public class TelephonyTestBase {
         replaceInstance(PhoneFactory.class, "sPhones", null, new Phone[] {mPhone});
         replaceInstance(PhoneGlobals.class, "sMe", null, mPhoneGlobals);
         replaceInstance(PhoneFactory.class, "sMetricsCollector", null, mMetricsCollector);
-        replaceInstance(SatelliteController.class, "sInstance", null,
-                Mockito.mock(SatelliteController.class));
 
         doReturn(Mockito.mock(PersistAtomsStorage.class)).when(mMetricsCollector).getAtomsStorage();
 
@@ -124,45 +112,7 @@ public class TelephonyTestBase {
     public void tearDown() throws Exception {
         // Ensure there are no static references to handlers after test completes.
         PhoneConfigurationManager.unregisterAllMultiSimConfigChangeRegistrants();
-        cleanupTestLooper();
         restoreInstances();
-    }
-
-    protected void setupTestLooper() {
-        mTestHandlerThread = new HandlerThread("TestHandlerThread");
-        mTestHandlerThread.start();
-        mTestLooper = mTestHandlerThread.getLooper();
-        mLooperManager = new TestLooperManager(mTestLooper);
-    }
-
-    private void cleanupTestLooper() {
-        mTestLooper = null;
-        if (mLooperManager != null) {
-            mLooperManager.release();
-            mLooperManager = null;
-        }
-        if (mTestHandlerThread != null) {
-            mTestHandlerThread.quit();
-            try {
-                mTestHandlerThread.join();
-            } catch (InterruptedException ex) {
-                Log.w("TelephonyTestBase", "HandlerThread join interrupted", ex);
-            }
-            mTestHandlerThread = null;
-        }
-    }
-
-    protected void processOneMessage() {
-        var msg = mLooperManager.next();
-        mLooperManager.execute(msg);
-        mLooperManager.recycle(msg);
-    }
-
-    protected void processAllMessages() {
-        for (var msg = mLooperManager.poll(); msg != null && msg.getTarget() != null;) {
-            mLooperManager.execute(msg);
-            mLooperManager.recycle(msg);
-        }
     }
 
     protected final boolean waitForExecutorAction(Executor executor, long timeoutMillis) {

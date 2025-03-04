@@ -501,7 +501,11 @@ public class PhoneGlobals extends ContextWrapper {
     public PhoneGlobals(Context context) {
         super(context);
         sMe = this;
-        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (mFeatureFlags.enforceTelephonyFeatureMappingForPublicApis()) {
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+                mSettingsObserver = new SettingsObserver(context, mHandler);
+            }
+        } else {
             mSettingsObserver = new SettingsObserver(context, mHandler);
         }
     }
@@ -511,8 +515,9 @@ public class PhoneGlobals extends ContextWrapper {
 
         ContentResolver resolver = getContentResolver();
 
-        if (!getResources().getBoolean(
-                com.android.internal.R.bool.config_force_phone_globals_creation)) {
+        if (mFeatureFlags.enforceTelephonyFeatureMappingForPublicApis()
+                && !getResources().getBoolean(
+                    com.android.internal.R.bool.config_force_phone_globals_creation)) {
             if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
                 Log.v(LOG_TAG, "onCreate()... but not defined FEATURE_TELEPHONY");
                 return;

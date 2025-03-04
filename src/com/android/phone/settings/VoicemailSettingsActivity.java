@@ -264,8 +264,6 @@ public class VoicemailSettingsActivity extends PreferenceActivity
                 NotificationChannelController.CHANNEL_ID_VOICE_MAIL);
         intent.putExtra(Settings.EXTRA_APP_PACKAGE, mPhone.getContext().getPackageName());
         mVoicemailNotificationPreference.setIntent(intent);
-
-        SettingsConstants.setupEdgeToEdge(this);
     }
 
     @Override
@@ -291,10 +289,6 @@ public class VoicemailSettingsActivity extends PreferenceActivity
         mPreviousVMProviderKey = mVoicemailProviders.getValue();
 
         mVoicemailSettings = (PreferenceScreen) findPreference(BUTTON_VOICEMAIL_SETTING_KEY);
-        // 😮‍💨 the legacy PreferenceScreen displays a dialog in its onClick.  Set a property on the
-        // PreferenceScreen to ensure that it will fit system windows to accommodate for edge to
-        // edge.
-        mVoicemailSettings.setDialogFitsSystemWindows(true);
 
         maybeHidePublicSettings();
 

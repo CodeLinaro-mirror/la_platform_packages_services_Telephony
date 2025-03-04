@@ -29,11 +29,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -169,7 +169,8 @@ public final class SimPhonebookProviderTest {
 
     @Test
     public void query_entityFiles_noSim_returnsEmptyCursor() {
-        doReturn(ImmutableList.of()).when(mMockSubscriptionManager).getActiveSubscriptionInfoList();
+        when(mMockSubscriptionManager.getActiveSubscriptionInfoList()).thenReturn(
+                ImmutableList.of());
 
         try (Cursor cursor = mResolver.query(ElementaryFiles.CONTENT_URI, null, null, null)) {
             assertThat(cursor).hasCount(0);
@@ -362,7 +363,7 @@ public final class SimPhonebookProviderTest {
         // Use a mock so that a null list can be returned
         IIccPhoneBook mockIccPhoneBook = mock(
                 IIccPhoneBook.class, AdditionalAnswers.delegatesTo(mIccPhoneBook));
-        doReturn(null).when(mockIccPhoneBook).getAdnRecordsInEfForSubscriber(anyInt(), anyInt());
+        when(mockIccPhoneBook.getAdnRecordsInEfForSubscriber(anyInt(), anyInt())).thenReturn(null);
         TestableSimPhonebookProvider.setup(mResolver, mMockSubscriptionManager, mockIccPhoneBook);
 
         try (Cursor adnCursor = mResolver.query(SimRecords.getContentUri(1, EF_ADN), null, null,
@@ -1333,14 +1334,14 @@ public final class SimPhonebookProviderTest {
     }
 
     private void setupSimsWithSubscriptionIds(int... subscriptionIds) {
-        doReturn(subscriptionIds).when(mMockSubscriptionManager).getActiveSubscriptionIdList();
-        doReturn(subscriptionIds.length).when(mMockSubscriptionManager)
-                .getActiveSubscriptionInfoCount();
+        when(mMockSubscriptionManager.getActiveSubscriptionIdList()).thenReturn(subscriptionIds);
+        when(mMockSubscriptionManager.getActiveSubscriptionInfoCount())
+                .thenReturn(subscriptionIds.length);
         List<SubscriptionInfo> subscriptions = createSubscriptionsWithIds(subscriptionIds);
-        doReturn(subscriptions).when(mMockSubscriptionManager).getActiveSubscriptionInfoList();
+        when(mMockSubscriptionManager.getActiveSubscriptionInfoList()).thenReturn(subscriptions);
         for (SubscriptionInfo info : subscriptions) {
-            doReturn(info).when(mMockSubscriptionManager)
-                    .getActiveSubscriptionInfo(info.getSubscriptionId());
+            when(mMockSubscriptionManager.getActiveSubscriptionInfo(info.getSubscriptionId()))
+                    .thenReturn(info);
         }
     }
 

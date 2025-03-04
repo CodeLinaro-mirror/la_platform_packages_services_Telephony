@@ -985,9 +985,7 @@ public class ImsStateCallbackControllerTest extends TelephonyTestBase {
         when(mSubscriptionManager.getActiveSubscriptionIdList()).thenReturn(subIds);
     }
 
-    // Override - not using mTestLooper from the base class
-    @Override
-    protected void processAllMessages() {
+    private void processAllMessages() {
         while (!mLooper.getLooper().getQueue().isIdle()) {
             mLooper.processAllMessages();
         }
