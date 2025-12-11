@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
+// QTI_BEGIN: 2025-04-15: Telephony: Radio Info: Set up the edge-to-edge display
 /*
  * Changes from Qualcomm Technologies, Inc. are provided under the following license:
  * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  * SPDX-License-Identifier: BSD-3-Clause-Clear
+// QTI_END: 2025-04-15: Telephony: Radio Info: Set up the edge-to-edge display
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
  */
 
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 package com.android.phone.settings;
 
 import static android.net.ConnectivityManager.NetworkCallback;
@@ -43,17 +47,17 @@ import static com.qti.extphone.ExtTelephonyManager.FEATURE_TDSCDMA_SUPPORT;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import android.annotation.NonNull;
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import android.content.BroadcastReceiver;
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import android.content.IntentFilter;
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -70,9 +74,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerExecutor;
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import android.os.HandlerThread;
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import android.os.Message;
 import android.os.PersistableBundle;
 import android.os.SystemProperties;
@@ -152,9 +156,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import java.util.HashMap;
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -300,12 +304,12 @@ public class RadioInfo extends AppCompatActivity {
         Log.d(TAG, s);
     }
 
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
     private static void loge(String s) {
         Log.e(TAG, s);
     }
 
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
     private static final int EVENT_QUERY_SMSC_DONE = 1005;
     private static final int EVENT_UPDATE_SMSC_DONE = 1006;
     private static final int EVENT_UPDATE_NR_STATS = 1008;
@@ -448,7 +452,7 @@ public class RadioInfo extends AppCompatActivity {
         }
     };
 
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
     private static final String ACTION_RADIO_POWER_STATE_CHANGED =
             "org.codeaurora.intent.action.RADIO_POWER_STATE";
     private static final String RADIO_POWER_STATE = "state";
@@ -474,7 +478,7 @@ public class RadioInfo extends AppCompatActivity {
         }
     };
 
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
     private static final int DEFAULT_TIMEOUT_MS = 1000;
 
     // not final because we need to recreate this object to register on a new subId (b/117555407)
@@ -695,13 +699,13 @@ public class RadioInfo extends AppCompatActivity {
             mPhoneId = DEFAULT_PHONE_ID;
         }
 
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
         mBroadcastReceiverThread.start();
         Handler scheduler = new Handler(mBroadcastReceiverThread.getLooper());
         IntentFilter filter = new IntentFilter(ACTION_RADIO_POWER_STATE_CHANGED);
         mPhone.getContext().registerReceiver(mBroadcastReceiver, filter, null, scheduler);
 
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
         mImsManager = new ImsManager(this);
         try {
             mProvisioningManager = ProvisioningManager.createForSubscriptionId(mSubId);
@@ -839,9 +843,9 @@ public class RadioInfo extends AppCompatActivity {
                     showDsdsChangeDialog();
                 } else {
                     performDsdsSwitch();
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
                     mDsdsSwitch.setEnabled(false);
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
                 }
             });
             mDsdsSwitch.setChecked(isDsdsEnabled());
@@ -1270,10 +1274,10 @@ public class RadioInfo extends AppCompatActivity {
         if (mExtTelephonyManager != null && mServiceCallback != null) {
             mExtTelephonyManager.disconnectService(mServiceCallback);
         }
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
         mPhone.getContext().unregisterReceiver(mBroadcastReceiver);
         mBroadcastReceiverThread.quitSafely();
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
     }
 
     private void clearOverride() {
@@ -3175,7 +3179,7 @@ public class RadioInfo extends AppCompatActivity {
         return mCarrierConfigManager;
     }
 
-// QTI_BEGIN: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_BEGIN: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
     private void handleRadioPowerStateChanged(int slotId, int radioState) {
         mRadioStatusMap.put(slotId, radioState != TelephonyManager.RADIO_POWER_UNAVAILABLE);
         int numRadiosAvailable = 0;
@@ -3194,5 +3198,5 @@ public class RadioInfo extends AppCompatActivity {
             log("handleRadioPowerStateChanged: mDsdsSwitch null");
         }
     }
-// QTI_END: 2023-07-12: Telephony: Gray out the "Enable DSDS" button upon switch
+// QTI_END: 2023-07-11: Telephony: Gray out the "Enable DSDS" button upon switch
 }

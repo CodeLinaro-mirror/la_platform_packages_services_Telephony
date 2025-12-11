@@ -1162,11 +1162,9 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                     if (ar.exception == null && ar.result != null) {
                         request.result = ar.result;     // Integer
                     } else {
-// QTI_BEGIN: 2020-07-31: Telephony: Fix error response handling for RIL request
                         // request.result must be set to something non-null
                         // for the calling thread to unblock
                         request.result = new int[]{-1};
-// QTI_END: 2020-07-31: Telephony: Fix error response handling for RIL request
                         if (ar.result == null) {
                             loge("getAllowedNetworkTypesBitmask: Empty response");
                         } else if (ar.exception instanceof CommandException) {
@@ -10941,11 +10939,13 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
             UiccSlotInfo[] slotInfos = getUiccSlotsInfo(mApp.getOpPackageName());
             if (slotInfos != null) {
                 for (int i = 0; i < slotInfos.length; i++) {
+// QTI_BEGIN: 2025-04-23: Telephony: Add null check in PhoneInterfaceManager class
                     UiccSlotInfo slotInfo = slotInfos[i];
                     if (slotInfo == null) {
                         continue;
                     }
                     for (UiccPortInfo portInfo : slotInfo.getPorts()) {
+// QTI_END: 2025-04-23: Telephony: Add null check in PhoneInterfaceManager class
                         if (SubscriptionManager.isValidPhoneId(portInfo.getLogicalSlotIndex())) {
                             slotMap.add(new UiccSlotMapping(portInfo.getPortIndex(), i,
                                     portInfo.getLogicalSlotIndex()));
