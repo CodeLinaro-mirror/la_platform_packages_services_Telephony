@@ -63,13 +63,13 @@ import android.telecom.TelecomManager;
 // QTI_END: 2021-11-03: Telephony: Add SIM info to USSD sessions on UI
 import android.telecom.VideoProfile;
 import android.telephony.CarrierConfigManager;
-// QTI_BEGIN: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_BEGIN: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
 import android.telephony.ims.ImsReasonInfo;
-// QTI_END: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_END: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
 import android.telephony.PhoneNumberUtils;
-// QTI_BEGIN: 2023-01-19: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
+// QTI_BEGIN: 2023-01-18: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
 import android.telephony.SubscriptionInfo;
-// QTI_END: 2023-01-19: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
+// QTI_END: 2023-01-18: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
 import android.telephony.SubscriptionManager;
 // QTI_BEGIN: 2021-11-03: Telephony: Add SIM info to USSD sessions on UI
 import android.telephony.TelephonyManager;
@@ -86,9 +86,9 @@ import android.widget.Toast;
 
 import com.android.internal.telephony.Call;
 import com.android.internal.telephony.CallStateException;
-// QTI_BEGIN: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_BEGIN: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
 import com.android.internal.telephony.CommandException;
-// QTI_END: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_END: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
 import com.android.internal.telephony.Connection;
 // QTI_BEGIN: 2023-03-16: Telephony: Enable telephony FDN check for side car SS requests.
 import com.android.internal.telephony.FdnUtils;
@@ -102,9 +102,9 @@ import com.android.internal.telephony.PhoneConstants;
 import com.android.internal.telephony.PhoneFactory;
 import com.android.internal.telephony.TelephonyCapabilities;
 import com.android.phone.settings.SuppServicesUiUtil;
-// QTI_BEGIN: 2023-01-19: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
+// QTI_BEGIN: 2023-01-18: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
 import com.android.services.telephony.TelecomAccountRegistry;
-// QTI_END: 2023-01-19: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
+// QTI_END: 2023-01-18: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
 import com.android.telephony.Rlog;
 
 // QTI_BEGIN: 2021-02-10: Telephony: Move IExtTelephony to IExtPhone
@@ -151,11 +151,11 @@ public class PhoneUtils {
     /** Define for default vibrate pattern if res cannot be found */
     private static final long[] DEFAULT_VIBRATE_PATTERN = {0, 250, 250, 250};
 
-// QTI_BEGIN: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_BEGIN: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
     private static final int INVALID = -1;
     private static int mBackToBackSSFeature = INVALID;
 
-// QTI_END: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_END: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
     /**
      * Theme to use for dialogs displayed by utility methods in this class. This is needed
      * because these dialogs are displayed using the application context, which does not resolve
@@ -832,7 +832,7 @@ public class PhoneUtils {
 
     public static PhoneAccountHandle makePstnPhoneAccountHandleWithPrefix(
             Phone phone, String prefix, boolean isEmergency, UserHandle userHandle) {
-// QTI_BEGIN: 2023-02-23: Telephony: IMS : Fix for phone process in guest mode
+// QTI_BEGIN: 2023-02-22: Telephony: IMS : Fix for phone process in guest mode
         // To determine this as an emergency only, we are checking the simless case
         // and updating the id based on that.
 
@@ -842,12 +842,12 @@ public class PhoneUtils {
         if (telecomAccountRegistry != null) {
             subList = telecomAccountRegistry.getActiveSubscriptionInfoList();
         }
-// QTI_END: 2023-02-23: Telephony: IMS : Fix for phone process in guest mode
-// QTI_BEGIN: 2023-01-19: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
+// QTI_END: 2023-02-22: Telephony: IMS : Fix for phone process in guest mode
+// QTI_BEGIN: 2023-01-18: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
 
         boolean isEmergencyOnlyAccount = subList != null && subList.size() == 0;
         String id = (isEmergency || isEmergencyOnlyAccount) ? EMERGENCY_ACCOUNT_HANDLE_ID : prefix +
-// QTI_END: 2023-01-19: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
+// QTI_END: 2023-01-18: Telephony: IMS : Move RTT downgrade and upgrade logic completely to AOSP.
                 String.valueOf((phone != null) ? phone.getSubId() : null);
         return makePstnPhoneAccountHandleWithId(id, userHandle);
     }
@@ -976,9 +976,9 @@ public class PhoneUtils {
 // QTI_BEGIN: 2018-03-07: Telephony: Emergency Number Implementation for SS & DS
     private static IExtTelephony getIExtTelephony() {
 // QTI_END: 2018-03-07: Telephony: Emergency Number Implementation for SS & DS
-// QTI_BEGIN: 2020-03-19: Telephony: SEPolicy: Update telephony SELinux policies to avoid name collision.
+// QTI_BEGIN: 2020-03-18: Telephony: SEPolicy: Update telephony SELinux policies to avoid name collision.
         return IExtTelephony.Stub.asInterface(ServiceManager.getService("qti.radio.extphone"));
-// QTI_END: 2020-03-19: Telephony: SEPolicy: Update telephony SELinux policies to avoid name collision.
+// QTI_END: 2020-03-18: Telephony: SEPolicy: Update telephony SELinux policies to avoid name collision.
 // QTI_BEGIN: 2018-03-07: Telephony: Emergency Number Implementation for SS & DS
     }
 
@@ -1063,16 +1063,16 @@ public class PhoneUtils {
     };
 
 // QTI_END: 2021-02-10: Telephony: Move IExtTelephony to IExtPhone
-// QTI_BEGIN: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_BEGIN: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
     static boolean isBacktoBackSSFeatureSupported() {
         if (mBackToBackSSFeature == INVALID) {
             mBackToBackSSFeature =
-// QTI_END: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_END: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
 // QTI_BEGIN: 2025-02-10: Telephony: Expect more flag not enabled for back to back SS requests
                    (mExtTelephonyManager.isFeatureSupported(
                    FEATURE_BACK_TO_BACK_SUPPLEMENTARY_SERVICE_REQ)) ? 1 : 0;
 // QTI_END: 2025-02-10: Telephony: Expect more flag not enabled for back to back SS requests
-// QTI_BEGIN: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_BEGIN: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
         }
         return (mBackToBackSSFeature == 1);
     }
@@ -1111,7 +1111,7 @@ public class PhoneUtils {
 
         return new CommandException(error);
     }
-// QTI_END: 2021-05-28: Telephony: Add CallForwarding and CallBarring expectMore support.
+// QTI_END: 2021-05-27: Telephony: Add CallForwarding and CallBarring expectMore support.
 
 // QTI_BEGIN: 2023-03-16: Telephony: Enable telephony FDN check for side car SS requests.
     public static boolean isRequestBlockedByFDN(SsData.RequestType requestType,
