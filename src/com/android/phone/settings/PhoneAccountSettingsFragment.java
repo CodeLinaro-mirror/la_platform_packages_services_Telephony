@@ -18,9 +18,9 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.SwitchPreference;
-// QTI_BEGIN: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_BEGIN: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
 import android.provider.Settings;
-// QTI_END: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_END: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -70,11 +70,11 @@ public class PhoneAccountSettingsFragment extends PreferenceFragment
     private static final String LEGACY_ACTION_CONFIGURE_PHONE_ACCOUNT =
             "android.telecom.action.CONNECTION_SERVICE_CONFIGURE";
 
-// QTI_BEGIN: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_BEGIN: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
     private static final String BUTTON_VIBRATING_KEY =
             "button_vibrating_for_outgoing_call_accepted_key";
 
-// QTI_END: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_END: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
     /**
      * Value to start ordering of phone accounts relative to other preferences. By setting this
      * value on the phone account listings, we ensure that anything that is ordered before
@@ -102,9 +102,9 @@ public class PhoneAccountSettingsFragment extends PreferenceFragment
 // QTI_END: 2019-04-04: Telephony: Fix to show Xdivert option in CallSettings.
 
     private PreferenceCategory mMakeAndReceiveCallsCategory;
-// QTI_BEGIN: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_BEGIN: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
     private SwitchPreference mButtonVibratingForMoCallAccepted;
-// QTI_END: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_END: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
     private boolean mMakeAndReceiveCallsCategoryPresent;
 
     private final SubscriptionManager.OnSubscriptionsChangedListener
@@ -195,10 +195,10 @@ public class PhoneAccountSettingsFragment extends PreferenceFragment
 
         mMakeAndReceiveCallsCategory = (PreferenceCategory) getPreferenceScreen().findPreference(
                 MAKE_AND_RECEIVE_CALLS_CATEGORY_KEY);
-// QTI_BEGIN: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_BEGIN: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
         mButtonVibratingForMoCallAccepted = (SwitchPreference)
                 mMakeAndReceiveCallsCategory.findPreference(BUTTON_VIBRATING_KEY);
-// QTI_END: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_END: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
         mMakeAndReceiveCallsCategoryPresent = false;
 
         updateAccounts();
@@ -557,10 +557,10 @@ public class PhoneAccountSettingsFragment extends PreferenceFragment
                 mMakeAndReceiveCallsCategory.removePreference(mButtonVibratingForMoCallAccepted);
             }
 // QTI_END: 2022-04-06: Telephony: Fix for duplicate Vibrating button in single sim
-// QTI_BEGIN: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_BEGIN: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
         }
 
-// QTI_END: 2020-02-11: Telephony: Add vibrating for outgoing call accepted support
+// QTI_END: 2020-02-10: Telephony: Add vibrating for outgoing call accepted support
         if (!mMakeAndReceiveCallsCategoryPresent) {
             getPreferenceScreen().removePreference(mMakeAndReceiveCallsCategory);
         }

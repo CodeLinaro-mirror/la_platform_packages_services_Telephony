@@ -209,9 +209,7 @@ public class TelephonyConnectionService extends ConnectionService {
         }
     };
 
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Handle incoming call properly after exiting DSDA"
     private final BroadcastReceiver mTtyBroadcastReceiver = new BroadcastReceiver() {
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Handle incoming call properly after exiting DSDA"
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -247,9 +245,9 @@ public class TelephonyConnectionService extends ConnectionService {
     /** Set to true when there is an emergency call pending which will potential trigger a dial.
      * This must be set to false when the call is dialed. */
     private volatile boolean mIsEmergencyCallPending;
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
     private AnswerAndReleaseHandler mAnswerAndReleaseHandler = null;
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
 
     // Contains one TelephonyConnection that has placed a call and a memory of which Phones it has
     // already tried to connect with. There should be only one TelephonyConnection trying to place a
@@ -313,7 +311,7 @@ public class TelephonyConnectionService extends ConnectionService {
         int getPhoneId(int subId);
     }
 
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
     private AnswerAndReleaseHandler.ListenerBase mAnswerAndReleaseListener =
             new AnswerAndReleaseHandler.ListenerBase() {
         @Override
@@ -323,7 +321,7 @@ public class TelephonyConnectionService extends ConnectionService {
         }
     };
 
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
     private SubscriptionManagerProxy mSubscriptionManagerProxy = new SubscriptionManagerProxy() {
         @Override
         public int getDefaultVoicePhoneId() {
@@ -360,9 +358,7 @@ public class TelephonyConnectionService extends ConnectionService {
          * Determines whether concurrent IMS calls across both SIMs are possible, based on whether
          * the device is DSDA capable, or if the DSDS device supports virtual DSDA.
          */
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
         boolean isConcurrentCallsPossible();
-// QTI_END: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
 
         /**
          * Gets the maximum number of SIMs that can be active, based on the device's multisim
@@ -413,21 +409,15 @@ public class TelephonyConnectionService extends ConnectionService {
             }
         }
 
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
         @Override
         public boolean isConcurrentCallsPossible() {
-// QTI_END: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
             try {
-// QTI_BEGIN: 2025-01-30: Telephony: Remove usage of isConcurrentCallsPossible
                 return getMaxNumberOfSimultaneouslyActiveSims() > 1
-// QTI_END: 2025-01-30: Telephony: Remove usage of isConcurrentCallsPossible
                     || mTelephonyManager.getPhoneCapability().getMaxActiveVoiceSubscriptions() > 1;
             } catch (IllegalStateException ise) {
                 return false;
             }
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
         }
-// QTI_END: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
     }
 
     /**
@@ -942,18 +932,16 @@ public class TelephonyConnectionService extends ConnectionService {
             new TelephonyConnection.TelephonyConnectionListener() {
         @Override
         public void onOriginalConnectionConfigured(TelephonyConnection c) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
             addConnectionToConferenceController(c);
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_END: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
         }
 
         @Override
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
         public void onOriginalConnectionRetry(TelephonyConnection c, boolean isPermanentFailure) {
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
             retryOutgoingOriginalConnection(c, c.getPhone(), isPermanentFailure);
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_END: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
         }
     };
 
@@ -961,9 +949,7 @@ public class TelephonyConnectionService extends ConnectionService {
             new TelephonyConferenceBase.TelephonyConferenceListener() {
         @Override
         public void onConferenceMembershipChanged(Connection connection) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
             mHoldTracker.updateHoldCapability();
-// QTI_END: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
         }
     };
 
@@ -993,9 +979,7 @@ public class TelephonyConnectionService extends ConnectionService {
         mExpectedComponentName = new ComponentName(this, this.getClass());
         mEmergencyTonePlayer = new EmergencyTonePlayer(this);
         TelecomAccountRegistry.getInstance(this).setTelephonyConnectionService(this);
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle transition to DSDS"
         mHoldTracker = new HoldTracker();
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle transition to DSDS"
         mIsTtyEnabled = mDeviceState.isTtyModeEnabled(this);
         mDomainSelectionMainExecutor = getApplicationContext().getMainExecutor();
         mDomainSelectionResolver = DomainSelectionResolver.getInstance();
@@ -1003,17 +987,13 @@ public class TelephonyConnectionService extends ConnectionService {
 
         IntentFilter intentFilter = new IntentFilter(
                 TelecomManager.ACTION_TTY_PREFERRED_MODE_CHANGED);
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Handle incoming call properly after exiting DSDA"
         registerReceiver(mTtyBroadcastReceiver, intentFilter,
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Handle incoming call properly after exiting DSDA"
                 android.Manifest.permission.MODIFY_PHONE_STATE, null, Context.RECEIVER_EXPORTED);
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Handle incoming call properly after exiting DSDA"
         unregisterReceiver(mTtyBroadcastReceiver);
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Handle incoming call properly after exiting DSDA"
         return super.onUnbind(intent);
     }
 
@@ -1030,14 +1010,14 @@ public class TelephonyConnectionService extends ConnectionService {
         updatePhoneAccount(conferenceHostConnection, phone);
         com.android.internal.telephony.Connection originalConnection = null;
         try {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
             originalConnection = phone.startConference(
                     getParticipantsToDial(request.getParticipants()),
                     new ImsPhone.ImsDialArgs.Builder()
                     .setVideoState(request.getVideoState())
                     .setRttTextStream(conferenceHostConnection.getRttTextStream())
                     .build());
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
         } catch (CallStateException e) {
             Log.e(this, e, "placeOutgoingConference, phone.startConference exception: " + e);
             handleCallStateException(e, conferenceHostConnection, phone);
@@ -1084,9 +1064,9 @@ public class TelephonyConnectionService extends ConnectionService {
         return conference;
     }
 
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
     @Override
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
 // QTI_BEGIN: 2021-04-16: Telephony: IMS: Fix issue of answering calls for some 3rd party apps
     protected void answer(String callId) {
         answerVideo(callId, VideoProfile.STATE_AUDIO_ONLY);
@@ -1095,42 +1075,42 @@ public class TelephonyConnectionService extends ConnectionService {
     @Override
     protected void answerVideo(String callId, int videoState) {
 // QTI_END: 2021-04-16: Telephony: IMS: Fix issue of answering calls for some 3rd party apps
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
         if (mAnswerAndReleaseHandler != null) {
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
             Log.i(this, "answerVideo: duplicate answer request.");
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
             return;
         }
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
 
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
         Connection answerAndReleaseConnection = shallDisconnectOtherCalls();
         boolean isAnswerAndReleaseConnection = answerAndReleaseConnection != null;
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
         Log.i(this, "answerVideo: isAnswerAndReleaseConnection: " + isAnswerAndReleaseConnection);
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
         if (!isAnswerAndReleaseConnection) {
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
 // QTI_BEGIN: 2021-04-16: Telephony: IMS: Fix issue of answering calls for some 3rd party apps
             super.answerVideo(callId, videoState);
 // QTI_END: 2021-04-16: Telephony: IMS: Fix issue of answering calls for some 3rd party apps
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
             return;
         }
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
 
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
         mAnswerAndReleaseHandler =
                 new AnswerAndReleaseHandler(answerAndReleaseConnection, videoState);
         mAnswerAndReleaseHandler.addListener(mAnswerAndReleaseListener);
         mAnswerAndReleaseHandler.checkAndAnswer(getAllConnections(), getAllConferences());
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
     }
 
     private Connection shallDisconnectOtherCalls() {
@@ -1145,7 +1125,7 @@ public class TelephonyConnectionService extends ConnectionService {
         return null;
     }
 
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
     @Override
     public @Nullable Conference onCreateIncomingConference(
             @Nullable PhoneAccountHandle connectionManagerPhoneAccount,
@@ -1224,9 +1204,7 @@ public class TelephonyConnectionService extends ConnectionService {
         Uri handle = request.getAddress();
         boolean isAdhocConference = request.isAdhocConferenceCall();
 
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
         if (!isAdhocConference && handle == null) {
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
             Log.d(this, "onCreateOutgoingConnection, handle is null");
             return Connection.createFailedConnection(
                     mDisconnectCauseFactory.toTelecomDisconnectCause(
@@ -1254,18 +1232,14 @@ public class TelephonyConnectionService extends ConnectionService {
                 return Connection.createFailedConnection(
                         mDisconnectCauseFactory.toTelecomDisconnectCause(
                                 android.telephony.DisconnectCause.VOICEMAIL_NUMBER_MISSING,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                                 "Voicemail scheme provided but no voicemail number set.",
                                 phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
             }
 
             // Convert voicemail: to tel:
             handle = Uri.fromParts(PhoneAccount.SCHEME_TEL, number, null);
         } else {
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
             if (!PhoneAccount.SCHEME_TEL.equals(scheme)) {
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                 Log.d(this, "onCreateOutgoingConnection, Handle %s is not type tel", scheme);
                 return Connection.createFailedConnection(
                         mDisconnectCauseFactory.toTelecomDisconnectCause(
@@ -1274,9 +1248,7 @@ public class TelephonyConnectionService extends ConnectionService {
             }
 
             number = handle.getSchemeSpecificPart();
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
             if (TextUtils.isEmpty(number)) {
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                 Log.d(this, "onCreateOutgoingConnection, unable to parse number");
                 return Connection.createFailedConnection(
                         mDisconnectCauseFactory.toTelecomDisconnectCause(
@@ -1303,10 +1275,8 @@ public class TelephonyConnectionService extends ConnectionService {
                             mDisconnectCauseFactory.toTelecomDisconnectCause(
                                     android.telephony.DisconnectCause
                                             .CDMA_ALREADY_ACTIVATED,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                                     "Tried to dial *228",
                                     phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 }
             }
         }
@@ -1503,13 +1473,11 @@ public class TelephonyConnectionService extends ConnectionService {
                     }
                     return resultConnection;
                 } else {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Bypass AOSP DSDA logic for add call"
 // If call sequencing is enabled, Telecom will take care of holding calls across
 // subscriptions if needed before delegating the connection creation over to
 // Telephony.
 if (mTelephonyManagerProxy.isConcurrentCallsPossible()
             && !mTelecomFlags.enableCallSequencing()) {
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Bypass AOSP DSDA logic for add call"
                         Conferenceable c = maybeHoldCallsOnOtherSubs(request.getAccountHandle());
                         if (c != null) {
                             delayDialForOtherSubHold(phone, c, (success) -> {
@@ -1819,10 +1787,8 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                 return Connection.createFailedConnection(
                         mDisconnectCauseFactory.toTelecomDisconnectCause(
                                 android.telephony.DisconnectCause.CDMA_NOT_EMERGENCY,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                                 "Cannot make non-emergency call in ECM mode.",
                                 phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
             }
         }
 
@@ -1835,23 +1801,21 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                     if (phone.isUtEnabled() && number.endsWith("#")) {
                         Log.d(this, "onCreateOutgoingConnection dial for UT");
                         break;
-// QTI_BEGIN: 2021-02-03: Telephony: IMS: Allow dial when UE is PS only attached
+// QTI_BEGIN: 2021-02-02: Telephony: IMS: Allow dial when UE is PS only attached
                     } else if (phone.isOutgoingImsVoiceAllowed()) {
-// QTI_END: 2021-02-03: Telephony: IMS: Allow dial when UE is PS only attached
-// QTI_BEGIN: 2023-11-30: Telephony: Update onCreateOutgoingConnection logging
+// QTI_END: 2021-02-02: Telephony: IMS: Allow dial when UE is PS only attached
+// QTI_BEGIN: 2023-11-29: Telephony: Update onCreateOutgoingConnection logging
                         Log.d(this, "onCreateOutgoingConnection outgoing ims voice dial allowed");
-// QTI_END: 2023-11-30: Telephony: Update onCreateOutgoingConnection logging
-// QTI_BEGIN: 2021-02-03: Telephony: IMS: Allow dial when UE is PS only attached
+// QTI_END: 2023-11-29: Telephony: Update onCreateOutgoingConnection logging
+// QTI_BEGIN: 2021-02-02: Telephony: IMS: Allow dial when UE is PS only attached
                         break;
-// QTI_END: 2021-02-03: Telephony: IMS: Allow dial when UE is PS only attached
+// QTI_END: 2021-02-02: Telephony: IMS: Allow dial when UE is PS only attached
                     } else {
                         return Connection.createFailedConnection(
                                 mDisconnectCauseFactory.toTelecomDisconnectCause(
                                         android.telephony.DisconnectCause.OUT_OF_SERVICE,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                                         "ServiceState.STATE_OUT_OF_SERVICE",
                                         phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     }
                 case ServiceState.STATE_POWER_OFF:
                     // Don't disconnect if radio is power off because the device is on Bluetooth.
@@ -1861,19 +1825,15 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                     return Connection.createFailedConnection(
                             mDisconnectCauseFactory.toTelecomDisconnectCause(
                                     android.telephony.DisconnectCause.POWER_OFF,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                                     "ServiceState.STATE_POWER_OFF",
                                     phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 default:
                     Log.d(this, "onCreateOutgoingConnection, unknown service state: %d", state);
                     return Connection.createFailedConnection(
                             mDisconnectCauseFactory.toTelecomDisconnectCause(
                                     android.telephony.DisconnectCause.OUTGOING_FAILURE,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                                     "Unknown service state " + state,
                                     phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
             }
         }
 
@@ -1907,10 +1867,8 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
             return Connection.createFailedConnection(
                     mDisconnectCauseFactory.toTelecomDisconnectCause(
                             android.telephony.DisconnectCause.DIALED_CALL_FORWARDING_WHILE_ROAMING,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                             "Call forwarding while roaming",
                             phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
         }
 
         PhoneAccountHandle accountHandle = adjustAccountHandle(phone, request.getAccountHandle());
@@ -1921,10 +1879,8 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
             return Connection.createFailedConnection(
                     mDisconnectCauseFactory.toTelecomDisconnectCause(
                             android.telephony.DisconnectCause.OUTGOING_FAILURE,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                             "Invalid phone type",
                             phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
         }
         if (!Objects.equals(request.getAccountHandle(), accountHandle)) {
             Log.i(this, "onCreateOutgoingConnection, update phoneAccountHandle, accountHandle = "
@@ -1995,10 +1951,8 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
             Connection connection = Connection.createFailedConnection(
                     mDisconnectCauseFactory.toTelecomDisconnectCause(
                             android.telephony.DisconnectCause.INCOMING_MISSED,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                             "Found no ringing call",
                             phone.getPhoneId()));
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
 
             long time = extras.getLong(TelecomManager.EXTRA_CALL_CREATED_EPOCH_TIME_MILLIS);
             if (time != 0) {
@@ -2327,36 +2281,28 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
     @Override
     public void onConnectionAdded(Connection connection) {
         if (connection instanceof Holdable && !isExternalConnection(connection)) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
             mHoldTracker.addHoldable((Holdable) connection);
-// QTI_END: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
         }
     }
 
     @Override
     public void onConnectionRemoved(Connection connection) {
         if (connection instanceof Holdable && !isExternalConnection(connection)) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
             mHoldTracker.removeHoldable((Holdable) connection);
-// QTI_END: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
         }
     }
 
     @Override
     public void onConferenceAdded(Conference conference) {
         if (conference instanceof Holdable) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
             mHoldTracker.addHoldable((Holdable) conference);
-// QTI_END: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
         }
     }
 
     @Override
     public void onConferenceRemoved(Conference conference) {
         if (conference instanceof Holdable) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
             mHoldTracker.removeHoldable((Holdable) conference);
-// QTI_END: 2025-01-30: Telephony: Revert "Revert "DSDA: Update hold capability across subscriptions.""
         }
     }
 
@@ -2520,17 +2466,13 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
             Bundle connExtras = c.getExtras();
             Log.i(this, "retryOutgoingOriginalConnection, redialing on Phone Id: " + newPhoneToUse);
             c.clearOriginalConnection();
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
             if (phoneId != newPhoneToUse.getPhoneId()) {
-// QTI_END: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
                 if (mTelephonyManagerProxy.getMaxNumberOfSimultaneouslyActiveSims() < 2) {
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
                     disconnectAllCallsOnOtherSubs(
                             mPhoneUtilsProxy.makePstnPhoneAccountHandle(newPhoneToUse));
                 }
                 updatePhoneAccount(c, newPhoneToUse);
             }
-// QTI_END: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
             if (mDomainSelectionResolver.isDomainSelectionSupported()) {
                 onEmergencyRedial(c, newPhoneToUse, false);
                 return;
@@ -2597,7 +2539,6 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                 Log.i(this, "placeOutgoingConnection isEmergency=" + isEmergency);
                 if (isEmergency) {
                     handleEmergencyCallStartedForSatelliteSOSMessageRecommender(connection, phone);
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                     if (!getAllConnections().isEmpty()) {
                         if (!shouldHoldForEmergencyCall(phone)) {
                             // If we do not support holding ongoing calls for an outgoing
@@ -2609,16 +2550,12 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                                     ((TelephonyConnection) c).hangup(
                                             android.telephony.DisconnectCause
                                                     .OUTGOING_EMERGENCY_CALL_PLACED);
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                                 }
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                             }
                             for (Conference c : getAllConferences()) {
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                                 if (c.getState() != Connection.STATE_DISCONNECTED) {
                                     c.onDisconnect();
                                 }
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                             }
                         } else if (!isVideoCallHoldAllowed(phone)) {
                             // If we do not support holding ongoing video call for an outgoing
@@ -2632,7 +2569,6 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                                             android.telephony.DisconnectCause
                                                     .OUTGOING_EMERGENCY_CALL_PLACED);
                                     break;
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                                 }
                             }
                         }
@@ -2699,14 +2635,12 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
 // QTI_BEGIN: 2018-03-08: Telephony: IMS: Allow placeCall with uri number
                 }
 // QTI_END: 2018-03-08: Telephony: IMS: Allow placeCall with uri number
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
                 originalConnection = phone.dial(number, new ImsPhone.ImsDialArgs.Builder()
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
-// QTI_BEGIN: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
                         .setVideoState(videoState)
                         .setIntentExtras(extras)
                         .setRttTextStream(connection.getRttTextStream())
-// QTI_END: 2020-03-19: Telephony: Ims: Clean-up old ConfURI implementation
                         .build(),
                         // We need to wait until the phone has been chosen in GsmCdmaPhone to
                         // register for the associated TelephonyConnection call event listeners.
@@ -2876,10 +2810,8 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
 
         String dialPart = PhoneNumberUtils.extractNetworkPortionAlt(
                 PhoneNumberUtils.stripSeparators(number));
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "Fix for USSD on other sub when call is in ringing"
         boolean isMmiCode = (dialPart.startsWith("*") || dialPart.startsWith("#"))
                 && dialPart.endsWith("#");
-// QTI_END: 2025-01-30: Telephony: Revert "Fix for USSD on other sub when call is in ringing"
         boolean isSuppServiceCode = ImsPhoneMmiCode.isSuppServiceCodes(dialPart, phone);
         boolean isPotentialUssdCode = isMmiCode && !isSuppServiceCode;
 
@@ -3925,10 +3857,10 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                 CarrierConfigManager.KEY_ALLOW_HOLD_CALL_DURING_EMERGENCY_BOOL, true);
     }
 
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
     private void handleCallStateException(CallStateException e, TelephonyConnection connection,
             Phone phone) {
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Handle across sub operations"
         int cause = android.telephony.DisconnectCause.OUTGOING_FAILURE;
         switch (e.getError()) {
             case CallStateException.ERROR_OUT_OF_SERVICE:
@@ -3951,10 +3883,10 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                  break;
             case CallStateException.ERROR_OTASP_PROVISIONING_IN_PROCESS:
                  cause = android.telephony.DisconnectCause.OTASP_PROVISIONING_IN_PROCESS;
-// QTI_BEGIN: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_BEGIN: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case CallStateException.ERROR_DEVICE_IN_SECURE_MODE:
                  cause = android.telephony.DisconnectCause.SECURE_MODE;
-// QTI_END: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_END: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
                  break;
             case CallStateException.ERROR_FDN_BLOCKED:
                  cause = android.telephony.DisconnectCause.FDN_BLOCKED;
@@ -3995,12 +3927,12 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                     allowsMute, callDirection, telecomCallId);
         }
         if (returnConnection != null) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
             if (!isAdhocConference) {
                 // Listen to Telephony specific callbacks from the connection
                 returnConnection.addTelephonyConnectionListener(mTelephonyConnectionListener);
             }
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
+// QTI_END: 2025-01-29: Telephony: Revert "IMS: Support VT DSDA use cases"
             returnConnection.setVideoPauseSupported(
                     TelecomAccountRegistry.getInstance(this).isVideoPauseSupported(
                             phoneAccountHandle));
@@ -4737,11 +4669,11 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
         // when we go between CDMA and GSM we should replace the TelephonyConnection.
         if (connection.isImsConnection()) {
             Log.d(this, "Adding IMS connection to conference controller: " + connection);
-// QTI_BEGIN: 2022-02-17: Telephony: IMS: Fix the crashes in MT conference call
+// QTI_BEGIN: 2022-02-16: Telephony: IMS: Fix the crashes in MT conference call
             if (connection.getTelephonyConnectionService() == null) {
                 connection.setTelephonyConnectionService(this);
             }
-// QTI_END: 2022-02-17: Telephony: IMS: Fix the crashes in MT conference call
+// QTI_END: 2022-02-16: Telephony: IMS: Fix the crashes in MT conference call
             mImsConferenceController.add(connection);
             mTelephonyConferenceController.remove(connection);
             if (connection instanceof CdmaConnection) {
@@ -5117,9 +5049,7 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
             @NonNull PhoneAccountHandle incomingHandle,
             boolean answeringDropsFgCall,
             TelephonyManagerProxy telephonyManagerProxy) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle transition to DSDS"
         if (telephonyManagerProxy.isConcurrentCallsPossible() && !answeringDropsFgCall) {
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle transition to DSDS"
             return;
         }
         connections.stream()
@@ -5325,7 +5255,6 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
         return null;
     }
 
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
 /**
  * For DSDA devices, disconnects all calls (and conferences) on other subs when placing an
  * emergency call.
@@ -5359,7 +5288,6 @@ protected List<Conferenceable> disconnectAllConferenceablesOnOtherSubs(
     return conferenceables;
 }
 
-// QTI_BEGIN: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
 /**
  * For DSDA devices, disconnects all calls on other subs when placing an emergency call.
  * @param handle The {@link PhoneAccountHandle} to exclude when disconnecting calls
@@ -5386,7 +5314,6 @@ private List<Connection> disconnectAllCallsOnOtherSubs(@NonNull PhoneAccountHand
                 });
         return disconnectedConnections;
     }
-// QTI_END: 2022-02-25: Telephony: Fix concurrent calls occurs when E911 redial happens
 
     private @NetworkRegistrationInfo.Domain int getActiveCallDomain(int subId) {
         for (Connection c: getAllConnections()) {
@@ -5525,6 +5452,4 @@ private List<Connection> disconnectAllCallsOnOtherSubs(@NonNull PhoneAccountHand
     private void loge(String s) {
         Log.d(this, s);
     }
-// QTI_BEGIN: 2021-11-02: Telephony: IMS: Fix MO call failure on HELD conference call DSDS
 }
-// QTI_END: 2021-11-02: Telephony: IMS: Fix MO call failure on HELD conference call DSDS
