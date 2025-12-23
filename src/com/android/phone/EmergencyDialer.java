@@ -18,9 +18,11 @@ package com.android.phone;
 
 import static android.telephony.ServiceState.RIL_RADIO_TECHNOLOGY_UNKNOWN;
 
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 import static android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
 import static android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
 
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.ColorInt;
@@ -29,9 +31,9 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.WallpaperColors;
 import android.app.WallpaperManager;
-// QTI_BEGIN: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_BEGIN: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
 import android.app.StatusBarManager;
-// QTI_END: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_END: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -72,7 +74,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.AccessibilityDelegate;
 import android.view.ViewGroup;
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 import android.view.WindowInsetsController;
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.TextView;
@@ -80,7 +84,9 @@ import android.widget.TextView;
 import com.android.phone.common.dialpad.DialpadKeyButton;
 import com.android.phone.common.util.ViewUtil;
 import com.android.phone.common.widget.ResizingTextEditText;
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 import com.android.phone.settings.SettingsConstants;
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 import com.android.telephony.Rlog;
 
 import java.util.ArrayList;
@@ -183,9 +189,9 @@ public class EmergencyDialer extends Activity implements View.OnClickListener,
     private boolean mDTMFToneEnabled;
 
     private EmergencyInfoGroup mEmergencyInfoInDialpad;
-// QTI_BEGIN: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_BEGIN: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
     private StatusBarManager mStatusBarManager;
-// QTI_END: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_END: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
     private EmergencyInfoGroup mEmergencyInfoInShortcut;
 
     // close activity when screen turns off
@@ -267,7 +273,9 @@ public class EmergencyDialer extends Activity implements View.OnClickListener,
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
         SettingsConstants.setupEdgeToEdge(this);
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
 
         getWindow().addSystemFlags(
                 android.view.WindowManager.LayoutParams
@@ -297,9 +305,9 @@ public class EmergencyDialer extends Activity implements View.OnClickListener,
         }
 
         setContentView(R.layout.emergency_dialer);
-// QTI_BEGIN: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_BEGIN: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
         mStatusBarManager = (StatusBarManager) getSystemService(Context.STATUS_BAR_SERVICE);
-// QTI_END: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_END: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
 
         mDigits = (ResizingTextEditText) findViewById(R.id.digits);
         mDigits.setKeyListener(DialerKeyListener.getInstance());
@@ -658,12 +666,12 @@ public class EmergencyDialer extends Activity implements View.OnClickListener,
     protected void onResume() {
         super.onResume();
 
-// QTI_BEGIN: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_BEGIN: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
         if (null != mStatusBarManager) {
             mStatusBarManager.disable(
                      StatusBarManager.DISABLE_RECENT|StatusBarManager.DISABLE_HOME);
         }
-// QTI_END: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_END: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
         // retrieve the DTMF tone play back setting.
         mDTMFToneEnabled = Settings.System.getInt(getContentResolver(),
                 Settings.System.DTMF_TONE_WHEN_DIALING, 1) == 1;
@@ -688,11 +696,11 @@ public class EmergencyDialer extends Activity implements View.OnClickListener,
     @Override
     public void onPause() {
         super.onPause();
-// QTI_BEGIN: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_BEGIN: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
         if (null != mStatusBarManager) {
             mStatusBarManager.disable(StatusBarManager.DISABLE_NONE);
         }
-// QTI_END: 2018-09-28: Telephony: EmergencyDialer: Fix overlap issue
+// QTI_END: 2018-09-27: Telephony: EmergencyDialer: Fix overlap issue
     }
 
     @Override
@@ -723,18 +731,24 @@ public class EmergencyDialer extends Activity implements View.OnClickListener,
             return;
         }
 
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
         int systemBarsMask = APPEARANCE_LIGHT_STATUS_BARS | APPEARANCE_LIGHT_NAVIGATION_BARS;
         int systemBarsAppearance = 0;
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
         if (supportsDarkText) {
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
             systemBarsAppearance = systemBarsMask;
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
             setTheme(R.style.EmergencyDialerThemeDark);
         } else {
             setTheme(R.style.EmergencyDialerTheme);
         }
+// QTI_BEGIN: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
         WindowInsetsController insetsController = getWindow().getInsetsController();
         if (insetsController != null) {
             insetsController.setSystemBarsAppearance(systemBarsAppearance, systemBarsMask);
         }
+// QTI_END: 2025-04-15: Telephony: EmergencyDialer: Set up the edge-to-edge display
     }
 
     /**
