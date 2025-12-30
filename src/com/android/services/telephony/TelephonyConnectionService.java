@@ -122,7 +122,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+// QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
 import java.util.concurrent.CopyOnWriteArrayList;
+// QTI_END: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -951,6 +953,7 @@ public class TelephonyConnectionService extends ConnectionService {
         }
     };
 
+// QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
     private List<ConnectionRemovedListener> mConnectionRemovedListeners =
             new CopyOnWriteArrayList<>();
 
@@ -962,6 +965,7 @@ public class TelephonyConnectionService extends ConnectionService {
         public void onConnectionRemoved(TelephonyConnection conn);
     }
 
+// QTI_END: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
     @Override
     public void onCreate() {
         super.onCreate();
@@ -3939,7 +3943,9 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
                     TelecomAccountRegistry.getInstance(this).isShowPreciseFailedCause(
                             phoneAccountHandle));
             returnConnection.setTelephonyConnectionService(this);
+// QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
             addConnectionRemovedListener(returnConnection);
+// QTI_END: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
         }
         return returnConnection;
     }
@@ -4637,8 +4643,10 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
     public void removeConnection(Connection connection) {
         super.removeConnection(connection);
         if (connection instanceof TelephonyConnection) {
+// QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
             removeConnectionRemovedListener((TelephonyConnection)connection);
             fireOnConnectionRemoved((TelephonyConnection)connection);
+// QTI_END: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
         }
     }
 
@@ -4690,6 +4698,7 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
         }
     }
 
+// QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
     private void addConnectionRemovedListener(ConnectionRemovedListener l) {
         mConnectionRemovedListeners.add(l);
     }
@@ -4706,6 +4715,7 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
         }
     }
 
+// QTI_END: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
     /**
      * Create a new CDMA connection. CDMA connections have additional limitations when creating
      * additional calls which are handled in this method.  Specifically, CDMA has a "FLASH" command
