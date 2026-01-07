@@ -19,14 +19,10 @@ package com.android.services.telephony;
 import android.content.Context;
 import android.media.ToneGenerator;
 import android.os.PersistableBundle;
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
 import android.provider.Settings;
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
 import android.telecom.DisconnectCause;
 import android.telephony.CarrierConfigManager;
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
 import android.telephony.SubscriptionManager;
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
 import android.telephony.TelephonyManager;
 import android.telephony.ims.ImsReasonInfo;
 
@@ -99,10 +95,8 @@ public class DisconnectCauseUtil {
             int telephonyDisconnectCause, int telephonyPreciseDisconnectCause, String reason) {
         return toTelecomDisconnectCause(telephonyDisconnectCause, telephonyPreciseDisconnectCause,
                 reason, SubscriptionManager.getDefaultVoicePhoneId(), null, new FlagsAdapterImpl());
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     }
 
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     /**
      * Converts from a disconnect code in {@link android.telephony.DisconnectCause} into a more
      * generic {@link android.telecom.DisconnectCause}.object, possibly populated with a localized
@@ -111,13 +105,10 @@ public class DisconnectCauseUtil {
      * @param telephonyDisconnectCause The code for the reason for the disconnect.
      * @param phoneId To support localized message based on phoneId
      */
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     public static DisconnectCause toTelecomDisconnectCause(int telephonyDisconnectCause,
             String reason, int phoneId) {
         return toTelecomDisconnectCause(telephonyDisconnectCause, CallFailCause.NOT_VALID,
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 reason, phoneId, null, new FlagsAdapterImpl(), false);
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     }
 
    /**
@@ -125,17 +116,12 @@ public class DisconnectCauseUtil {
     * generic {@link android.telecom.DisconnectCause}.object, possibly populated with a localized
     * message and tone for Slot.
     * @param telephonyDisconnectCause The code for the reason for the disconnect.
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     * @param telephonyPreciseDisconnectCause The code for the precise reason for the disconnect.
     * @param reason Description of the reason for the disconnect, not intended for the user to see.
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     * @param phoneId To support localized message based on phoneId
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     * @param imsReasonInfo
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
     */
     public static DisconnectCause toTelecomDisconnectCause(
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
             int telephonyDisconnectCause, int telephonyPreciseDisconnectCause, String reason,
             int phoneId, ImsReasonInfo imsReasonInfo, FlagsAdapter featureFlags) {
         return toTelecomDisconnectCause(telephonyDisconnectCause, telephonyPreciseDisconnectCause,
@@ -271,9 +257,9 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.ALREADY_DIALING:
             case android.telephony.DisconnectCause.CANT_CALL_WHILE_RINGING:
             case android.telephony.DisconnectCause.CALLING_DISABLED:
-// QTI_BEGIN: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_BEGIN: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case android.telephony.DisconnectCause.SECURE_MODE:
-// QTI_END: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_END: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case android.telephony.DisconnectCause.TOO_MANY_ONGOING_CALLS:
             case android.telephony.DisconnectCause.OTASP_PROVISIONING_IN_PROCESS:
             case android.telephony.DisconnectCause.UNOBTAINABLE_NUMBER:
@@ -306,7 +292,7 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.EXITED_ECM:
             case android.telephony.DisconnectCause.MMI:
             case android.telephony.DisconnectCause.IMS_MERGED_SUCCESSFULLY:
-// QTI_BEGIN: 2018-04-11: Telephony: Return the correct res id for text and tone
+// QTI_BEGIN: 2018-04-10: Telephony: Return the correct res id for text and tone
             case android.telephony.DisconnectCause.NO_CIRCUIT_AVAIL:
             case android.telephony.DisconnectCause.NO_ROUTE_TO_DESTINATION:
             case android.telephony.DisconnectCause.OPERATOR_DETERMINED_BARRING:
@@ -349,7 +335,7 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.RECOVERY_ON_TIMER_EXPIRED:
             case android.telephony.DisconnectCause.PROTOCOL_ERROR_UNSPECIFIED:
             case android.telephony.DisconnectCause.INTERWORKING_UNSPECIFIED:
-// QTI_END: 2018-04-11: Telephony: Return the correct res id for text and tone
+// QTI_END: 2018-04-10: Telephony: Return the correct res id for text and tone
                 return DisconnectCause.OTHER;
 
             case android.telephony.DisconnectCause.NOT_VALID:
@@ -519,11 +505,11 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.CALLING_DISABLED:
                 resourceId = R.string.callFailed_calling_disabled;
                 break;
-// QTI_BEGIN: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_BEGIN: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case android.telephony.DisconnectCause.SECURE_MODE:
                 resourceId = R.string.callFailed_secure_mode;
                 break;
-// QTI_END: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_END: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case android.telephony.DisconnectCause.TOO_MANY_ONGOING_CALLS:
                 resourceId = R.string.callFailed_too_many_calls;
                 break;
@@ -868,13 +854,9 @@ public class DisconnectCauseUtil {
                     resourceId = R.string.incall_error_power_off_thermal;
                 } else if (ImsUtil.shouldPromoteWfc(context, phoneId)) {
                     resourceId = R.string.incall_error_promote_wfc;
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 } else if (ImsUtil.isWfcModeWifiOnly(context, phoneId)) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     resourceId = R.string.incall_error_wfc_only_no_wireless_network;
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 } else if (ImsUtil.isWfcEnabled(context, phoneId)) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     resourceId = R.string.incall_error_power_off_wfc;
                 } else {
                     resourceId = R.string.incall_error_power_off;
@@ -907,17 +889,11 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.OUT_OF_SERVICE:
                 // No network connection.
                 FeatureFlags mFeatureFlags = new FeatureFlagsImpl();
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 if (ImsUtil.shouldPromoteWfc(context, phoneId)) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     resourceId = R.string.incall_error_promote_wfc;
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 } else if (ImsUtil.isWfcModeWifiOnly(context, phoneId)) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     resourceId = R.string.incall_error_wfc_only_no_wireless_network;
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 } else if (ImsUtil.isWfcEnabled(context, phoneId)) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     if (!mFeatureFlags.showCallFailNotificationFor2gToggle()) {
                         resourceId = R.string.incall_error_out_of_service_wfc;
                         break;
@@ -961,7 +937,7 @@ public class DisconnectCauseUtil {
 
             case android.telephony.DisconnectCause.MAXIMUM_NUMBER_OF_CALLS_REACHED:
                 resourceId = R.string.callFailed_maximum_reached;
-// QTI_BEGIN: 2018-04-11: Telephony: Return the correct res id for text and tone
+// QTI_BEGIN: 2018-04-10: Telephony: Return the correct res id for text and tone
             // Supplementary for Clear Code
             case android.telephony.DisconnectCause.BUSY:
                 resourceId = R.string.callFailed_userBusy;
@@ -1157,7 +1133,7 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.NON_SELECTED_USER_CLEARING:
                 resourceId = R.string.callFailed_non_selected_user_clearing;
                 break;
-// QTI_END: 2018-04-11: Telephony: Return the correct res id for text and tone
+// QTI_END: 2018-04-10: Telephony: Return the correct res id for text and tone
 
             case android.telephony.DisconnectCause.OUTGOING_CANCELED:
                 // We don't want to show any dialog for the canceled case since the call was
@@ -1193,11 +1169,11 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.CALLING_DISABLED:
                 resourceId = R.string.callFailed_calling_disabled;
                 break;
-// QTI_BEGIN: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_BEGIN: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case android.telephony.DisconnectCause.SECURE_MODE:
                 resourceId = R.string.callFailed_secure_mode;
                 break;
-// QTI_END: 2022-05-10: Telephony: Add Secure Mode specific DisconnectCause
+// QTI_END: 2022-05-09: Telephony: Add Secure Mode specific DisconnectCause
             case android.telephony.DisconnectCause.TOO_MANY_ONGOING_CALLS:
                 resourceId = R.string.callFailed_too_many_calls;
                 break;
@@ -1206,10 +1182,8 @@ public class DisconnectCauseUtil {
                         Settings.Global.AIRPLANE_MODE_ON, 0);
                 resourceId = R.string.incall_error_call_failed;
                 if (airplaneMode != 0) {
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
                     resourceId = R.string.incall_error_power_off;
                 }
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
                 break;
             case android.telephony.DisconnectCause.OTASP_PROVISIONING_IN_PROCESS:
                 resourceId = R.string.callFailed_otasp_provisioning_in_process;
@@ -1250,9 +1224,7 @@ public class DisconnectCauseUtil {
      * @return The disconnect reason.
      */
     private static String toTelecomDisconnectReason(Context context, int telephonyDisconnectCause,
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
             String reason, int phoneId) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
 
         if (context == null) {
             return "";
@@ -1264,9 +1236,7 @@ public class DisconnectCauseUtil {
                 // intentional fall-through
             case android.telephony.DisconnectCause.OUT_OF_SERVICE:
                 // No network connection.
-// QTI_BEGIN: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                 if (ImsUtil.shouldPromoteWfc(context, phoneId)) {
-// QTI_END: 2018-03-14: Telephony: IMS: No option to merge calls in VoWIFI
                     return android.telecom.DisconnectCause.REASON_WIFI_ON_BUT_WFC_OFF;
                 }
                 break;
@@ -1317,7 +1287,7 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.OUT_OF_SERVICE:
                 return ToneGenerator.TONE_CDMA_CALLDROP_LITE;
 
-// QTI_BEGIN: 2018-04-11: Telephony: Return the correct res id for text and tone
+// QTI_BEGIN: 2018-04-10: Telephony: Return the correct res id for text and tone
             case android.telephony.DisconnectCause.NO_ROUTE_TO_DESTINATION:
             case android.telephony.DisconnectCause.OPERATOR_DETERMINED_BARRING:
             case android.telephony.DisconnectCause.CALL_FAIL_NO_USER_RESPONDING:
@@ -1325,7 +1295,7 @@ public class DisconnectCauseUtil {
             case android.telephony.DisconnectCause.CALL_FAIL_DESTINATION_OUT_OF_ORDER:
             case android.telephony.DisconnectCause.BEARER_CAPABILITY_NOT_AUTHORIZED:
             case android.telephony.DisconnectCause.USER_NOT_MEMBER_OF_CUG:
-// QTI_END: 2018-04-11: Telephony: Return the correct res id for text and tone
+// QTI_END: 2018-04-10: Telephony: Return the correct res id for text and tone
             case android.telephony.DisconnectCause.UNOBTAINABLE_NUMBER:
                 return ToneGenerator.TONE_SUP_ERROR;
 
