@@ -592,6 +592,7 @@ public class GsmUmtsCallBarringOptions extends TimeConsumingPreferenceActivity
     }
 
 // QTI_END: 2018-05-07: Telephony: IMS: Call barring enhancement for UT
+// QTI_BEGIN: 2019-06-03: Telephony: Fix IntentReceiver leaked error
     @Override
     public void onPause() {
         super.onPause();
@@ -600,6 +601,7 @@ public class GsmUmtsCallBarringOptions extends TimeConsumingPreferenceActivity
         }
     }
 
+// QTI_END: 2019-06-03: Telephony: Fix IntentReceiver leaked error
 // QTI_BEGIN: 2023-04-25: Telephony: IMS: Fix serviceConnection leaked issue
     @Override
     public void onDestroy() {
