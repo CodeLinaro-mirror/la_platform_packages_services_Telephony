@@ -173,11 +173,11 @@ import android.telephony.satellite.ISelectedNbIotSatelliteSubscriptionCallback;
 import android.telephony.satellite.NtnSignalStrength;
 import android.telephony.satellite.NtnSignalStrengthCallback;
 import android.telephony.satellite.PlmnSatelliteConfig;
+import android.telephony.satellite.PointingUiAppLaunchIntentAttributes;
 import android.telephony.satellite.SatelliteCapabilities;
 import android.telephony.satellite.SatelliteDatagram;
 import android.telephony.satellite.SatelliteDatagramCallback;
 import android.telephony.satellite.SatelliteManager;
-import android.telephony.satellite.SatelliteManager.SatelliteEnablementRequestReason;
 import android.telephony.satellite.SatelliteModemStateCallback;
 import android.telephony.satellite.SatelliteProvisionStateCallback;
 import android.telephony.satellite.SatelliteSessionStats;
@@ -2820,7 +2820,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
             return Settings.Secure.getIntForUser(defaultPhone.getContext().getContentResolver(),
                     Settings.Secure.PREFERRED_TTY_MODE, defaultPhone.getContext().getUserId());
         } catch (Settings.SettingNotFoundException e) {
-            Log.w(LOG_TAG, "Secure setting not found: ", e);
+            // Do nothing. TTY_MODE_OFF will be returned below.
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
@@ -8794,6 +8794,11 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
     @Override
     @TelephonyManager.SetCarrierRestrictionResult
     public int setAllowedCarriers(CarrierRestrictionRules carrierRestrictionRules) {
+        // Shell has MODIFY_PHONE_STATE permission even without root
+        // But we don't want adb shell to disable carrier restrictions
+        if (TelephonyPermissions.isShell(Binder.getCallingUid())) {
+            throw new SecurityException("setAllowedCarriers cannot be invoked by shell");
+        }
         enforceModifyPermission();
 
         enforceTelephonyFeatureWithException(getCurrentPackageName(),
@@ -12784,9 +12789,19 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSatelliteEnabled");
         final long identity = Binder.clearCallingIdentity();
         try {
-            mSatelliteController.requestSatelliteEnabled(
-                    attributes.isEnabled(), attributes.isDemoMode(), attributes.isEmergencyMode(),
-                    callback);
+            final boolean isAutomaticAndUser = attributes.getConnectType()
+                    == CarrierConfigManager.CARRIER_ROAMING_NTN_CONNECT_AUTOMATIC
+                    && attributes.getSatelliteEnablementRequestReason()
+                    == SatelliteManager.SATELLITE_ENABLEMENT_REQUEST_REASON_USER;
+            if (isAutomaticAndUser) {
+                mSatelliteController.requestEnableSatelliteForCarrier(subId,
+                        SatelliteManager.SATELLITE_COMMUNICATION_RESTRICTION_REASON_USER,
+                        callback);
+            } else {
+                mSatelliteController.requestSatelliteEnabled(
+                        attributes.isEnabled(), attributes.isDemoMode(),
+                        attributes.isEmergencyMode(), callback);
+            }
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
@@ -12830,7 +12845,17 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         try {
             Log.d(LOG_TAG, "requestEnableSatelliteStatus: subId=" + subId
                     + ", connectType=" + connectType);
-            mSatelliteController.requestIsSatelliteEnabled(result);
+            if (connectType == CarrierConfigManager.CARRIER_ROAMING_NTN_CONNECT_AUTOMATIC) {
+                // TODO(b/323046234): Migrate to use Auto Satellite Enablement.
+                final Set<Integer> restrictions = mSatelliteController
+                        .getAttachRestrictionReasonsForCarrier(subId);
+                final Bundle bundle = new Bundle();
+                final boolean isSatelliteEnabled = restrictions.isEmpty();
+                bundle.putBoolean(SatelliteManager.KEY_SATELLITE_ENABLED, isSatelliteEnabled);
+                result.send(SatelliteManager.SATELLITE_RESULT_SUCCESS, bundle);
+            } else {
+                mSatelliteController.requestIsSatelliteEnabled(result);
+            }
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
@@ -14959,6 +14984,26 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         final long identity = Binder.clearCallingIdentity();
         try {
             return mSatelliteController.getSupportedServicesOnCarrierRoamingNtn(subId);
+        } finally {
+            Binder.restoreCallingIdentity(identity);
+        }
+    }
+
+    /**
+     * Request to get the PendingIntent to launch the PointingUI app.
+     *
+     * @param launchIntentAttributes The attributes to create the launch intent.
+     * @param receiver The result receiver that returns the {@link PendingIntent} to launch the
+     * PointingUI app if the request is successful or an error code if the request failed.
+     */
+    @Override
+    public void requestPointingUiAppLaunchIntent(
+            @NonNull PointingUiAppLaunchIntentAttributes launchIntentAttributes,
+            @NonNull ResultReceiver receiver) {
+        enforceSatelliteCommunicationPermission("requestPointingUiAppLaunchIntent");
+        final long identity = Binder.clearCallingIdentity();
+        try {
+            mSatelliteController.requestPointingUiAppLaunchIntent(launchIntentAttributes, receiver);
         } finally {
             Binder.restoreCallingIdentity(identity);
         }

@@ -302,8 +302,8 @@
     <string name="sip_accounts_removed_notification_message" msgid="1916856744869791592">"SIP కాలింగ్‌కు ఇకపై Android ప్లాట్‌ఫామ్‌లో సపోర్ట్ ఉండదు.\nఇప్పటికే ఉన్న మీ SIP ఖాతాలు<xliff:g id="REMOVED_SIP_ACCOUNTS">%s</xliff:g> తీసివేయబడ్డాయి.\nదయచేసి మీ ఆటోమేటిక్ కాలింగ్ ఖాతా సెట్టింగ్‌ను ధృవీకరించండి."</string>
     <string name="sip_accounts_removed_notification_action" msgid="3772778402370555562">"సెట్టింగ్‌లకు వెళ్లు"</string>
     <string name="data_usage_title" msgid="8438592133893837464">"యాప్ డేటా వినియోగం"</string>
-    <string name="data_usage_template" msgid="6287906680674061783">"<xliff:g id="ID_2">%2$s</xliff:g> మధ్య కాలంలో <xliff:g id="ID_1">%1$s</xliff:g> మొబైల్ డేటా ఉపయోగించబడింది"</string>
-    <string name="advanced_options_title" msgid="9208195294513520934">"అధునాతన సెట్టింగ్‌లు"</string>
+    <string name="data_usage_template" msgid="6287906680674061783">"<xliff:g id="ID_2">%2$s</xliff:g> మధ్య కాలంలో <xliff:g id="ID_1">%1$s</xliff:g> మొబైల్ డేటాను ఉపయోగించారు"</string>
+    <string name="advanced_options_title" msgid="9208195294513520934">"అడ్వాన్స్‌డ్ సెట్టింగ్స్"</string>
     <string name="carrier_settings_euicc" msgid="1190237227261337749">"క్యారియర్"</string>
     <string name="keywords_carrier_settings_euicc" msgid="8540160967922063745">"క్యారియర్, ఇసిమ్, సిమ్, ఇయుక్, క్యారియర్‌లను మార్చు, క్యారియర్‌ను జోడించండి"</string>
     <string name="carrier_settings_euicc_summary" msgid="2027941166597330117">"<xliff:g id="CARRIER_NAME">%1$s</xliff:g> — <xliff:g id="PHONE_NUMBER">%2$s</xliff:g>"</string>
@@ -838,6 +838,12 @@
     <string name="supp_service_over_ut_precautions_dialog_dismiss" msgid="5934541487903081652">"తీసివేయండి"</string>
     <string name="radio_info_data_connection_enable" msgid="6183729739783252840">"డేటా కనెక్షన్‌ను ప్రారంభించండి"</string>
     <string name="radio_info_data_connection_disable" msgid="6404751291511368706">"డేటా కనెక్షన్‌ను నిలిపివేయండి"</string>
+    <string name="radio_info_apply_preferred_network_type" msgid="8828433232282314858">"వర్తింపజేయండి"</string>
+    <string name="radio_info_all_label" msgid="4326377691373938122">"అన్నీ"</string>
+    <string name="radio_info_nr_label" msgid="4346984853962997752">"NR (5G)"</string>
+    <string name="radio_info_lte_label" msgid="5721318031926928485">"LTE (4G)"</string>
+    <string name="radio_info_wcdma_label" msgid="5157664869835235769">"UMTS (3G)"</string>
+    <string name="radio_info_gsm_label" msgid="2947899997551185529">"GSM (2G)"</string>
     <string name="volte_provisioned_switch_string" msgid="4812874990480336178">"VoLTE సదుపాయం ఉంది"</string>
     <string name="vt_provisioned_switch_string" msgid="8295542122512195979">"వీడియో కాలింగ్ సదుపాయం ఉంది"</string>
     <string name="wfc_provisioned_switch_string" msgid="3835004640321078988">"Wifi కాలింగ్ సదుపాయం ఉంది"</string>

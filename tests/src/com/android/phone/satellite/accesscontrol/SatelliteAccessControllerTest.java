@@ -103,6 +103,9 @@ import android.os.Message;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
 import android.os.UserHandle;
+import android.platform.test.annotations.DisableFlags;
+import android.platform.test.annotations.EnableFlags;
+import android.platform.test.flag.junit.SetFlagsRule;
 import android.telecom.TelecomManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -128,6 +131,7 @@ import com.android.internal.telephony.PhoneFactory;
 import com.android.internal.telephony.TelephonyCountryDetector;
 import com.android.internal.telephony.data.DataNetworkController;
 import com.android.internal.telephony.flags.FeatureFlags;
+import com.android.internal.telephony.flags.Flags;
 import com.android.internal.telephony.satellite.SatelliteConfig;
 import com.android.internal.telephony.satellite.SatelliteConfigParser;
 import com.android.internal.telephony.satellite.SatelliteController;
@@ -138,6 +142,7 @@ import com.android.internal.telephony.subscription.SubscriptionManagerService;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -171,6 +176,9 @@ import java.util.stream.IntStream;
 @RunWith(AndroidTestingRunner.class)
 @TestableLooper.RunWithLooper
 public class SatelliteAccessControllerTest extends TelephonyTestBase {
+    @Rule
+    public final SetFlagsRule mSetFlagsRule = new SetFlagsRule();
+
     private static final String TAG = "SatelliteAccessControllerTest";
     private static final String[] TEST_SATELLITE_COUNTRY_CODES = {"US", "CA", "UK"};
     private static final String[] TEST_SATELLITE_COUNTRY_CODES_EMPTY = {""};
@@ -2567,6 +2575,7 @@ public class SatelliteAccessControllerTest extends TelephonyTestBase {
     }
 
     @Test
+    @DisableFlags(Flags.FLAG_SYSTEM_SELECTION_SPECIFIER_ENHANCEMENT)
     public void testUpdateSystemSelectionChannels() {
         when(mMockFeatureFlags.systemSelectionSpecifierEnhancement()).thenReturn(false);
         when(mMockSubscriptionInfo.getMccString()).thenReturn("310");
@@ -2730,12 +2739,13 @@ public class SatelliteAccessControllerTest extends TelephonyTestBase {
     }
 
     @Test
+    @EnableFlags(Flags.FLAG_SYSTEM_SELECTION_SPECIFIER_ENHANCEMENT)
     public void testUpdateSystemSelectionChannelsWithSystemSelectionSpecifierEnhancement() {
         when(mMockFeatureFlags.systemSelectionSpecifierEnhancement()).thenReturn(true);
         when(mMockSubscriptionInfo.getMccString()).thenReturn("312");
         when(mMockSubscriptionInfo.getMncString()).thenReturn("213");
         when(mMockSubscriptionInfo.getIccId()).thenReturn("12345678901234567890");
-        when(mMockSatelliteController.getSatellitePlmnsForCarrier(anyInt()))
+        when(mMockSatelliteController.getManualConnectSatellitePlmnsForCarrier(anyInt()))
                 .thenReturn(Arrays.asList("310260", "310410"));
 
         // Set non-emergency case
