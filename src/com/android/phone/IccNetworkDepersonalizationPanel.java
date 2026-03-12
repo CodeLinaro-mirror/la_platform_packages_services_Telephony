@@ -79,10 +79,8 @@ public class IccNetworkDepersonalizationPanel extends IccPanel {
     //events
     private static final int EVENT_ICC_NTWRK_DEPERSONALIZATION_RESULT = 100;
 
-// QTI_BEGIN: 2020-05-29: Telephony: Add HAL version check in Handler
     //this enum value should match with error value being propagated from vendor
     private int ERROR = 1;
-// QTI_END: 2020-05-29: Telephony: Add HAL version check in Handler
     private Phone mPhone;
 // QTI_BEGIN: 2018-02-26: Telephony: * Telephony: SIM De-personalization
     private int mPersoSubtype;
@@ -179,7 +177,6 @@ public class IccNetworkDepersonalizationPanel extends IccPanel {
     private Handler mHandler = new Handler() {
         public void handleMessage(Message msg) {
             if (msg.what == EVENT_ICC_NTWRK_DEPERSONALIZATION_RESULT) {
-// QTI_BEGIN: 2020-05-29: Telephony: Add HAL version check in Handler
                 if (mPhone.getHalVersion().greaterOrEqual(RIL.RADIO_HAL_VERSION_1_5)) {
                     AsyncResult res = (AsyncResult) msg.obj;
                         if (res.exception != null) {
@@ -204,7 +201,6 @@ public class IccNetworkDepersonalizationPanel extends IccPanel {
                 } else {
                     //DepersoResult received ERROR/SUCCESS from vendor side
                     if (msg.arg1 == ERROR) {
-// QTI_END: 2020-05-29: Telephony: Add HAL version check in Handler
 // QTI_BEGIN: 2020-05-04: Telephony: 1.5 HAL version check support for sim-deperso
                         if (DBG) log("network depersonalization request failure.");
                         displayStatus(statusType.ERROR.name());
@@ -227,9 +223,7 @@ public class IccNetworkDepersonalizationPanel extends IccPanel {
 // QTI_END: 2020-05-04: Telephony: 1.5 HAL version check support for sim-deperso
                 }
             }
-// QTI_BEGIN: 2020-05-29: Telephony: Add HAL version check in Handler
         }
-// QTI_END: 2020-05-29: Telephony: Add HAL version check in Handler
     };
 
 // QTI_BEGIN: 2018-02-26: Telephony: * Telephony: SIM De-personalization
