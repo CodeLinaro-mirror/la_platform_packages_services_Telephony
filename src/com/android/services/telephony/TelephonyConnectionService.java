@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.services.telephony;
 
 import static android.telephony.CarrierConfigManager.KEY_USE_ONLY_DIALED_SIM_ECC_LIST_BOOL;
@@ -1321,7 +1327,8 @@ public class TelephonyConnectionService extends ConnectionService {
         boolean needToTurnOnRadio = (isEmergencyNumber && (!isRadioOn() || isAirplaneModeOn))
                 || (isRadioPowerDownOnBluetooth() && !isPhoneWifiCallingEnabled);
 
-        if (mSatelliteController.isSatelliteEnabledOrBeingEnabled()) {
+        if (mSatelliteController != null
+                && mSatelliteController.isSatelliteEnabledOrBeingEnabled()) {
             Log.d(this, "onCreateOutgoingConnection, "
                     + " needToTurnOnRadio=" + needToTurnOnRadio
                     + " needToTurnOffSatellite=" + needToTurnOffSatellite
@@ -1419,6 +1426,7 @@ public class TelephonyConnectionService extends ConnectionService {
                         // reporting the OUT_OF_SERVICE state.
                         return phone.getState() == PhoneConstants.State.OFFHOOK
                                 || (phone.getServiceStateTracker().isRadioOn()
+                                && mSatelliteController != null
                                 && !mSatelliteController.isSatelliteEnabledOrBeingEnabled());
                     } else {
                         SubscriptionInfoInternal subInfo = SubscriptionManagerService
@@ -2357,6 +2365,8 @@ if (mTelephonyManagerProxy.isConcurrentCallsPossible()
     }
 
     private boolean shouldExitSatelliteModeForEmergencyCall(boolean isEmergencyNumber) {
+        if (mSatelliteController == null) return false;
+
         if (!mSatelliteController.isSatelliteEnabledOrBeingEnabled()) {
             return false;
         }
@@ -5364,7 +5374,7 @@ private List<Connection> disconnectAllCallsOnOtherSubs(@NonNull PhoneAccountHand
      * else {@code false}.
      */
     private boolean isCallDisallowedDueToSatellite(Phone phone) {
-        if (phone == null) {
+        if (phone == null || mSatelliteController == null) {
             return false;
         }
 
@@ -5383,7 +5393,7 @@ private List<Connection> disconnectAllCallsOnOtherSubs(@NonNull PhoneAccountHand
     }
 
     private boolean isCallDisallowedDueToNtnEligibility(@Nullable Phone phone) {
-        if (phone == null) {
+        if (phone == null || mSatelliteController == null) {
             Log.d(this, "isCallDisallowedDueToNtnEligibility: phone is null");
             return false;
         }
@@ -5406,6 +5416,7 @@ private List<Connection> disconnectAllCallsOnOtherSubs(@NonNull PhoneAccountHand
     }
 
     private boolean isVoiceSupportedInSatelliteMode(@NonNull Phone phone) {
+        if (mSatelliteController == null) return false;
         List<Integer> capabilities =
                 mSatelliteController.getCapabilitiesForCarrierRoamingSatelliteMode(phone);
         if (capabilities.contains(NetworkRegistrationInfo.SERVICE_TYPE_VOICE)) {

@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.phone.satellite.accesscontrol;
 
 import static android.telephony.satellite.SatelliteManager.KEY_SATELLITE_ACCESS_CONFIGURATION;
@@ -54,6 +60,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.location.Location;
 import android.location.LocationManager;
@@ -676,6 +683,11 @@ public class SatelliteAccessController extends Handler {
     /** @return the singleton instance of {@link SatelliteAccessController} */
     public static synchronized SatelliteAccessController getOrCreateInstance(
             @NonNull Context context, @NonNull FeatureFlags featureFlags) {
+        if (!context.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_SATELLITE)) {
+            loge("SatelliteAccessController is not created.");
+            return null;
+        }
         if (sInstance == null) {
             HandlerThread handlerThread = new HandlerThread("SatelliteAccessController");
             handlerThread.start();

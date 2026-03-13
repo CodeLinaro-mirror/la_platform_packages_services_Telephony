@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.phone;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY_IMS;
@@ -29,6 +35,7 @@ import static android.telephony.satellite.SatelliteManager.SATELLITE_DISALLOWED_
 import static android.telephony.satellite.SatelliteManager.SATELLITE_DISALLOWED_REASON_UNSUPPORTED_DEFAULT_MSG_APP;
 import static android.telephony.satellite.SatelliteManager.SATELLITE_RESULT_ACCESS_BARRED;
 import static android.telephony.satellite.SatelliteManager.SATELLITE_RESULT_SUCCESS;
+import static android.telephony.satellite.SatelliteManager.SATELLITE_RESULT_ERROR;
 
 import static com.android.internal.telephony.PhoneConstants.PHONE_TYPE_CDMA;
 import static com.android.internal.telephony.PhoneConstants.PHONE_TYPE_GSM;
@@ -436,8 +443,8 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
     private final CallManager mCM;
     private final ImsResolver mImsResolver;
 
-    private final SatelliteController mSatelliteController;
-    private final SatelliteAccessController mSatelliteAccessController;
+    private final @Nullable SatelliteController mSatelliteController;
+    private final @Nullable SatelliteAccessController mSatelliteAccessController;
     private final UserManager mUserManager;
     private final MainThreadHandler mMainThreadHandler;
     private final SharedPreferences mTelephonySharedPreferences;
@@ -12898,6 +12905,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("getSatellitePlmnsForCarrier");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return Collections.emptyList();
             return mSatelliteController.getSatellitePlmnsForCarrier(subId);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13303,6 +13311,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSatelliteEnabled");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null || mSatelliteAccessController == null) return;
             if (enableSatellite) {
                 String caller = "PIM:requestSatelliteEnabled";
                 ResultReceiver resultReceiver = new ResultReceiver(mMainThreadHandler) {
@@ -13382,6 +13391,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestIsSatelliteEnabled");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestIsSatelliteEnabled(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13401,6 +13411,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestIsDemoModeEnabled");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestIsDemoModeEnabled(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13420,6 +13431,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestIsEmergencyModeEnabled");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestIsEmergencyModeEnabled(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13436,6 +13448,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
     public void requestIsSatelliteSupported(@NonNull ResultReceiver result) {
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestIsSatelliteSupported(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13455,6 +13468,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSatelliteCapabilities");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestSatelliteCapabilities(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13478,6 +13492,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("startSatelliteTransmissionUpdates");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.startSatelliteTransmissionUpdates(resultCallback, callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13501,6 +13516,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("stopSatelliteTransmissionUpdates");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.stopSatelliteTransmissionUpdates(resultCallback, callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13528,6 +13544,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("provisionSatelliteService");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return null;
             return mSatelliteController.provisionSatelliteService(token, provisionData,
                 callback);
         } finally {
@@ -13552,6 +13569,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("deprovisionSatelliteService");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.deprovisionSatelliteService(token, callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13573,6 +13591,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForSatelliteProvisionStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteController.registerForSatelliteProvisionStateChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13594,6 +13613,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForSatelliteProvisionStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForSatelliteProvisionStateChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13614,6 +13634,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestIsSatelliteProvisioned");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestIsSatelliteProvisioned(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13635,6 +13656,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForSatelliteModemStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteController.registerForSatelliteModemStateChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13655,6 +13677,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForModemStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForModemStateChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13676,6 +13699,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForIncomingDatagram");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteController.registerForIncomingDatagram(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13696,6 +13720,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForIncomingDatagram");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForIncomingDatagram(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13717,6 +13742,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("pollPendingDatagrams");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.pollPendingDatagrams(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13747,6 +13773,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("sendDatagram");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.sendDatagram(datagramType, datagram, needFullScreenPointingUI,
                     callback);
         } finally {
@@ -13765,6 +13792,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("getSatelliteDisallowedReasons");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return new int[0];
             return mSatelliteAccessController.getSatelliteDisallowedReasons()
                     .stream().mapToInt(Integer::intValue).toArray();
         } finally {
@@ -13785,6 +13813,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForSatelliteDisallowedReasonsChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return;
             mSatelliteAccessController.registerForSatelliteDisallowedReasonsChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13806,6 +13835,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForSatelliteDisallowedReasonsChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return;
             mSatelliteAccessController.unregisterForSatelliteDisallowedReasonsChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13829,6 +13859,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestIsCommunicationAllowedForCurrentLocation");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return;
             mSatelliteAccessController.requestIsCommunicationAllowedForCurrentLocation(result,
                     false);
         } finally {
@@ -13852,6 +13883,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "requestSatelliteAccessConfigurationForCurrentLocation");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return;
             mSatelliteAccessController
                     .requestSatelliteAccessConfigurationForCurrentLocation(result);
         } finally {
@@ -13872,6 +13904,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestTimeForNextSatelliteVisibility");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestTimeForNextSatelliteVisibility(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13892,6 +13925,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSatelliteDisplayName");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestSatelliteDisplayName(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13911,6 +13945,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSelectedNbIotSatelliteSubscriptionId");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestSelectedNbIotSatelliteSubscriptionId(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -13934,6 +13969,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "registerForSelectedNbIotSatelliteSubscriptionChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteController.registerForSelectedNbIotSatelliteSubscriptionChanged(
                     callback);
         } finally {
@@ -13958,6 +13994,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "unregisterForSelectedNbIotSatelliteSubscriptionChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForSelectedNbIotSatelliteSubscriptionChanged(
                     callback);
         } finally {
@@ -13979,6 +14016,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("setDeviceAlignedWithSatellite");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.setDeviceAlignedWithSatellite(isAligned);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14002,6 +14040,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("addAttachRestrictionForCarrier");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.addAttachRestrictionForCarrier(subId, reason, callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14025,6 +14064,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("removeAttachRestrictionForCarrier");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.removeAttachRestrictionForCarrier(subId, reason, callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14046,6 +14086,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("getAttachRestrictionReasonsForCarrier");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return new int[0];;
             Set<Integer> reasonSet =
                     mSatelliteController.getAttachRestrictionReasonsForCarrier(subId);
             return reasonSet.stream().mapToInt(i->i).toArray();
@@ -14067,6 +14108,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestNtnSignalStrength");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestNtnSignalStrength(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14093,6 +14135,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForNtnSignalStrengthChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.registerForNtnSignalStrengthChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14115,6 +14158,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForNtnSignalStrengthChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForNtnSignalStrengthChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14136,6 +14180,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForCapabilitiesChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteController.registerForCapabilitiesChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14157,6 +14202,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForCapabilitiesChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForCapabilitiesChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14178,6 +14224,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForSatelliteSupportedStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteController.registerForSatelliteSupportedStateChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14199,6 +14246,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForSatelliteSupportedStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.unregisterForSatelliteSupportedStateChanged(callback);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14225,6 +14273,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteServicePackageName");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteServicePackageName(servicePackageName,
                     provisioned);
         } finally {
@@ -14250,6 +14299,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteAccessAllowedForSubscriptions");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteAccessAllowedForSubscriptions(subIdListStr);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14272,6 +14322,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteGatewayServicePackageName");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteGatewayServicePackageName(servicePackageName);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14297,6 +14348,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatellitePointingUiClassName");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatellitePointingUiClassName(packageName, className);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14320,6 +14372,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteListeningTimeoutDuration");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteListeningTimeoutDuration(timeoutMillis);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14350,6 +14403,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setTnScanningSupport");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setTnScanningSupport(reset,
                 concurrentTnScanningSupported, tnScanningDuringSatelliteSessionAllowed);
         } finally {
@@ -14372,6 +14426,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteIgnoreCellularServiceState");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteIgnoreCellularServiceState(enabled);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14397,6 +14452,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSupportDisableSatelliteWhileEnableInProgress");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSupportDisableSatelliteWhileEnableInProgress(
                 reset, supported);
         } finally {
@@ -14422,6 +14478,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setDatagramControllerTimeoutDuration");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setDatagramControllerTimeoutDuration(
                     reset, timeoutType, timeoutMillis);
         } finally {
@@ -14447,6 +14504,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "ssetDatagramControllerBooleanConfig");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setDatagramControllerBooleanConfig(reset, booleanType,
                     enable);
         } finally {
@@ -14473,6 +14531,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteControllerTimeoutDuration");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteControllerTimeoutDuration(
                     reset, timeoutType, timeoutMillis);
         } finally {
@@ -14502,6 +14561,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setEmergencyCallToSatelliteHandoverType");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setEmergencyCallToSatelliteHandoverType(
                     handoverType, delaySeconds);
         } finally {
@@ -14527,6 +14587,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setOemEnabledSatelliteProvisionStatus");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setOemEnabledSatelliteProvisionStatus(reset, isProvisioned);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -14601,6 +14662,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteAccessControlOverlayConfigs");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return false;
             return mSatelliteAccessController.setSatelliteAccessControlOverlayConfigs(reset,
                     isAllowed, s2CellFile, locationFreshDurationNanos, satelliteCountryCodes,
                     satelliteAccessConfigurationFile);
@@ -14628,6 +14690,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setShouldSendDatagramToModemInDemoMode");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setShouldSendDatagramToModemInDemoMode(
                     shouldSendToModemInDemoMode);
         } finally {
@@ -14653,6 +14716,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setIsSatelliteCommunicationAllowedForCurrentLocationCache");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return false;
             return mSatelliteAccessController
                     .setIsSatelliteCommunicationAllowedForCurrentLocationCache(state);
         } finally {
@@ -14959,6 +15023,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("registerForCommunicationAccessStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return SATELLITE_RESULT_ERROR;
             return mSatelliteAccessController.registerForCommunicationAccessStateChanged(
                     subId, callback);
         } finally {
@@ -14983,6 +15048,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("unregisterForCommunicationAccessStateChanged");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return;
             mSatelliteAccessController.unregisterForCommunicationAccessStateChanged(subId,
                     callback);
         } finally {
@@ -15005,6 +15071,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforcePackageUsageStatsPermission("requestSatelliteSessionStats");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestSatelliteSessionStats(subId, result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15024,6 +15091,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSatelliteSubscriberProvisionStatus");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.requestSatelliteSubscriberProvisionStatus(result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15044,6 +15112,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("provisionSatellite");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.provisionSatellite(list, result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15064,6 +15133,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("deprovisionSatellite");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.deprovisionSatellite(list, result);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15088,6 +15158,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
 
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return;
             mSatelliteController.setNtnSmsSupportedByMessagesApp(ntnSmsSupported);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15121,6 +15192,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 "setSatelliteSubscriberIdListChangedIntentComponent");
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return false;
             return mSatelliteController.setSatelliteSubscriberIdListChangedIntentComponent(name);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15165,6 +15237,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
             boolean resetRequired) {
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteAccessController == null) return false;
             return mSatelliteAccessController.overrideCarrierRoamingNtnEligibilityChanged(state,
                     resetRequired);
         } finally {
@@ -15206,6 +15279,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         int userId = Binder.getCallingUserHandle().getIdentifier();
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return null;
             appNames = mSatelliteController.getSatelliteDataOptimizedApps(userId);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15237,6 +15311,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
 
         final long identity = Binder.clearCallingIdentity();
         try {
+            if (mSatelliteController == null) return 0;
             satelliteMode = mSatelliteController.getSatelliteDataSupportMode(subId);
         } finally {
             Binder.restoreCallingIdentity(identity);
@@ -15258,6 +15333,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         TelephonyPermissions.enforceCallingOrSelfModifyPermissionOrCarrierPrivilege(mApp,
                 SubscriptionManager.INVALID_SUBSCRIPTION_ID,
                 "setSatelliteIgnorePlmnListFromStorage");
+        if (mSatelliteController == null) return false;
         return mSatelliteController.setSatelliteIgnorePlmnListFromStorage(enabled);
     }
 }
