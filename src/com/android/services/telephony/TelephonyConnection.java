@@ -269,9 +269,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                     // whether the call should have the HD audio property set.
                     refreshConferenceSupported();
                     refreshDisableAddCall();
-// QTI_BEGIN: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
                     refreshHoldSupported();
-// QTI_END: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
                     updateConnectionProperties();
                     break;
 
@@ -628,9 +626,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
      */
     public abstract static class TelephonyConnectionListener {
         public void onOriginalConnectionConfigured(TelephonyConnection c) {}
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
         public void onOriginalConnectionRetry(TelephonyConnection c, boolean isPermanentFailure) {}
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
         public void onConferenceParticipantsChanged(Connection c,
                 List<ConferenceParticipant> participants) {}
         public void onConferenceStarted() {}
@@ -875,9 +871,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         @Override
         public void onRttTerminated() {
             updateConnectionProperties();
-// QTI_BEGIN: 2019-06-18: Telephony: Recalculate conference on RTT mode change
             refreshConferenceSupported();
-// QTI_END: 2019-06-18: Telephony: Recalculate conference on RTT mode change
             sendRttSessionRemotelyTerminated();
         }
 
@@ -1389,12 +1383,8 @@ abstract class TelephonyConnection extends Connection implements Holdable,
     public void performAnswer(int videoState) {
         Log.v(this, "performAnswer");
         if (isValidRingingCall() && getPhone() != null) {
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
             try {
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
-// QTI_BEGIN: 2021-10-05: Telephony: DSDA: Handle across sub operations
                 mTelephonyConnectionService.maybeDisconnectCallsOnOtherSubs(
-// QTI_END: 2021-10-05: Telephony: DSDA: Handle across sub operations
                             getPhoneAccountHandle(), answeringDropsFgCalls());
                 getPhone().acceptCall(videoState);
             } catch (CallStateException e) {
@@ -1437,15 +1427,11 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                     // New behavior for IMS -- don't use the clunky switchHoldingAndActive logic.
                     if (phone.getPhoneType() == PhoneConstants.PHONE_TYPE_IMS) {
                         ImsPhone imsPhone = (ImsPhone) phone;
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
                         imsPhone.holdActiveCall();
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
                         if (!com.android.server.telecom.flags.Flags.enableCallSequencing()) {
-// QTI_BEGIN: 2023-04-06: Telephony: DSDA: Bypass AOSP DSDA logic for resume call while swap
                             mTelephonyConnectionService.maybeUnholdCallsOnOtherSubs(
                                     getPhoneAccountHandle());
                         }
-// QTI_END: 2023-04-06: Telephony: DSDA: Bypass AOSP DSDA logic for resume call while swap
                         return;
                     }
                     phone.switchHoldingAndActive();
@@ -1468,9 +1454,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                 // New behavior for IMS -- don't use the clunky switchHoldingAndActive logic.
                 if (phone.getPhoneType() == PhoneConstants.PHONE_TYPE_IMS) {
                     ImsPhone imsPhone = (ImsPhone) phone;
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
                     imsPhone.unholdHeldCall();
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Handle across sub operations"
                     return;
                 }
                 // Here's the deal--Telephony hold/unhold is weird because whenever there exists
@@ -1638,24 +1622,16 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         updateConnectionCapabilities();
         updateConnectionProperties();
         if (mOriginalConnection != null) {
-// QTI_BEGIN: 2018-01-18: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             Uri address;
-// QTI_END: 2018-01-18: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
-// QTI_BEGIN: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             if (isShowingOriginalDialString()
                     && mOriginalConnection.getOrigDialString() != null) {
-// QTI_END: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
-// QTI_BEGIN: 2018-01-18: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
                 address = getAddressFromNumber(mOriginalConnection.getOrigDialString());
-// QTI_END: 2018-01-18: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             } else if (isNeededToFormatIncomingNumberForJp()) {
                 address = getAddressFromNumber(
                         formatIncomingNumberForJp(mOriginalConnection.getAddress()));
-// QTI_BEGIN: 2018-01-18: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             } else {
                 address = getAddressFromNumber(mOriginalConnection.getAddress());
             }
-// QTI_END: 2018-01-18: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             int presentation = mOriginalConnection.getNumberPresentation();
             if (!Objects.equals(address, getAddress()) ||
                     presentation != getAddressPresentation()) {
@@ -1707,21 +1683,17 @@ abstract class TelephonyConnection extends Connection implements Holdable,
     void setOriginalConnection(com.android.internal.telephony.Connection originalConnection) {
         Log.i(this, "setOriginalConnection: TelephonyConnection, originalConnection: "
                 + originalConnection);
-// QTI_BEGIN: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
         if (mOriginalConnection != null && originalConnection != null
                && !originalConnection.isIncoming()
                && originalConnection.getOrigDialString() == null
                && isShowingOriginalDialString()) {
             Log.i(this, "new original dial string is null, convert to: "
                    +  mOriginalConnection.getOrigDialString());
-// QTI_END: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             originalConnection.restoreDialedNumberAfterConversion(
                     mOriginalConnection.getOrigDialString());
-// QTI_BEGIN: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
         }
 
-// QTI_END: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
-// QTI_BEGIN: 2023-12-12: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
+// QTI_BEGIN: 2023-12-11: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
         // When a call is redialed as an emergency call, a handover may occur.
         // In that case, mIsNetworkIdentifiedEmergencyCall is overwritten
         // along with the Connection Property. The associated Call object
@@ -1736,7 +1708,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             isEmergency = mOriginalConnection.isNetworkIdentifiedEmergencyCall();
         }
 
-// QTI_END: 2023-12-12: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
+// QTI_END: 2023-12-11: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
         clearOriginalConnection();
         mOriginalConnectionExtras.clear();
         mOriginalConnection = originalConnection;
@@ -1755,10 +1727,10 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         // Set video state and capabilities
         setTelephonyVideoState(mOriginalConnection.getVideoState());
         setOriginalConnectionCapabilities(mOriginalConnection.getConnectionCapabilities());
-// QTI_BEGIN: 2023-12-12: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
+// QTI_BEGIN: 2023-12-11: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
         setIsNetworkIdentifiedEmergencyCall(isEmergency ||
                 mOriginalConnection.isNetworkIdentifiedEmergencyCall());
-// QTI_END: 2023-12-12: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
+// QTI_END: 2023-12-11: Telephony: Preserve isNetworkIdentifiedEmergencyCall for Connection during handover.
         setIsAdhocConferenceCall(mOriginalConnection.isAdhocConference());
         setAudioModeIsVoip(mOriginalConnection.getAudioModeIsVoip());
         setTelephonyVideoProvider(mOriginalConnection.getVideoProvider());
@@ -1776,9 +1748,9 @@ abstract class TelephonyConnection extends Connection implements Holdable,
 
         TelephonyManager tm = (TelephonyManager) getPhone().getContext()
                 .getSystemService(Context.TELEPHONY_SERVICE);
-// QTI_BEGIN: 2024-06-04: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
+// QTI_BEGIN: 2024-06-03: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
         if (isEmergency || tm.isEmergencyNumber(mOriginalConnection.getAddress())) {
-// QTI_END: 2024-06-04: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
+// QTI_END: 2024-06-03: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
             mTreatAsEmergencyCall = true;
         }
         // Propagate VERSTAT for IMS calls.
@@ -1806,27 +1778,27 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             extrasToRemove.add(QtiCallConstants.EXTRAS_CALL_PROGRESS_REASON_CODE);
             extrasToRemove.add(QtiCallConstants.EXTRAS_CALL_PROGRESS_REASON_TEXT);
 // QTI_END: 2021-01-05: Telephony: IMS: Remove call progress info extras in IMS call after SRVCC
-// QTI_BEGIN: 2021-06-07: Telephony: IMS: Remove CRS info extras in IMS call after SRVCC
+// QTI_BEGIN: 2021-06-06: Telephony: IMS: Remove CRS info extras in IMS call after SRVCC
             extrasToRemove.add(QtiCallConstants.EXTRA_CRS_TYPE);
             extrasToRemove.add(QtiCallConstants.EXTRA_ORIGINAL_CALL_TYPE);
             extrasToRemove.add(QtiCallConstants.EXTRA_IS_PREPARATORY);
-// QTI_END: 2021-06-07: Telephony: IMS: Remove CRS info extras in IMS call after SRVCC
-// QTI_BEGIN: 2023-02-08: Telephony: Remove the SRTP encryption info when SRVCC occur.
+// QTI_END: 2021-06-06: Telephony: IMS: Remove CRS info extras in IMS call after SRVCC
+// QTI_BEGIN: 2023-02-07: Telephony: Remove the SRTP encryption info when SRVCC occur.
             extrasToRemove.add(QtiCallConstants.EXTRAS_SRTP_ENCRYPTION_CATEGORY);
-// QTI_END: 2023-02-08: Telephony: Remove the SRTP encryption info when SRVCC occur.
+// QTI_END: 2023-02-07: Telephony: Remove the SRTP encryption info when SRVCC occur.
 // QTI_BEGIN: 2021-11-08: Telephony: IMS: Remove audio quality extra in IMS call after SRVCC
             extrasToRemove.add(QtiCallExtras.EXTRAS_CALL_AUDIO_QUALITY);
 // QTI_END: 2021-11-08: Telephony: IMS: Remove audio quality extra in IMS call after SRVCC
 // QTI_BEGIN: 2023-01-16: Telephony: IMS: Remove vos support extra in IMS call after SRVCC
             extrasToRemove.add(QtiCallConstants.EXTRA_VIDEO_ONLINE_SERVICE_SUPPORTED);
 // QTI_END: 2023-01-16: Telephony: IMS: Remove vos support extra in IMS call after SRVCC
-// QTI_BEGIN: 2024-11-20: Telephony: IMS: Support visualized voice call and CRBT call
+// QTI_BEGIN: 2024-11-19: Telephony: IMS: Support visualized voice call and CRBT call
             extrasToRemove.add(QtiCallConstants.EXTRA_IS_VISUALIZED_VOICE_CALL);
             extrasToRemove.add(QtiCallConstants.EXTRA_IS_CRBT_CALL);
-// QTI_END: 2024-11-20: Telephony: IMS: Support visualized voice call and CRBT call
-// QTI_BEGIN: 2025-01-03: Telephony: IMS: Support glasses free 3d video
+// QTI_END: 2024-11-19: Telephony: IMS: Support visualized voice call and CRBT call
+// QTI_BEGIN: 2025-01-02: Telephony: IMS: Support glasses free 3d video
             extrasToRemove.add(QtiCallConstants.GLASSES_FREE_3D_VIDEO_TYPE_EXTRA_KEY);
-// QTI_END: 2025-01-03: Telephony: IMS: Support glasses free 3d video
+// QTI_END: 2025-01-02: Telephony: IMS: Support glasses free 3d video
         }
         if (originalConnection instanceof ImsPhoneConnection) {
             maybeConfigureDeviceToDeviceCommunication();
@@ -1915,7 +1887,6 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         }
     }
 
-// QTI_BEGIN: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
     private void refreshHoldSupported() {
        if (mOriginalConnection == null) {
            Log.w(this, "refreshHoldSupported org conn is null");
@@ -1923,14 +1894,11 @@ abstract class TelephonyConnection extends Connection implements Holdable,
        }
 
        if (!mOriginalConnection.shouldAllowHoldingVideoCall() && canHoldImsCalls() !=
-// QTI_END: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
                ((getConnectionCapabilities() & (CAPABILITY_HOLD | CAPABILITY_SUPPORT_HOLD)) != 0)) {
-// QTI_BEGIN: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
            updateConnectionCapabilities();
        }
     }
 
-// QTI_END: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
     private void refreshDisableAddCall() {
         if (shouldSetDisableAddCallExtra()) {
             Bundle newExtras = getExtras();
@@ -2006,7 +1974,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
 // QTI_BEGIN: 2020-11-17: Telephony: IMS: Do not show wrong prompt in case of VT upgrade request.
     private void maybeRemoveAnsweringDropsFgCallExtra() {
 // QTI_END: 2020-11-17: Telephony: IMS: Do not show wrong prompt in case of VT upgrade request.
-// QTI_BEGIN: 2021-06-19: Telephony: IMS: Add check to properly remove the call extra
+// QTI_BEGIN: 2021-06-18: Telephony: IMS: Add check to properly remove the call extra
         if(mOriginalConnection == null || !mOriginalConnection.isActiveCallDisconnectedOnAnswer()) {
             return;
         }
@@ -2015,15 +1983,15 @@ abstract class TelephonyConnection extends Connection implements Holdable,
 
         if (state == Call.State.INCOMING || state == Call.State.WAITING) {
             return;
-// QTI_END: 2021-06-19: Telephony: IMS: Add check to properly remove the call extra
+// QTI_END: 2021-06-18: Telephony: IMS: Add check to properly remove the call extra
 // QTI_BEGIN: 2020-11-17: Telephony: IMS: Do not show wrong prompt in case of VT upgrade request.
         }
 // QTI_END: 2020-11-17: Telephony: IMS: Do not show wrong prompt in case of VT upgrade request.
-// QTI_BEGIN: 2021-06-19: Telephony: IMS: Add check to properly remove the call extra
+// QTI_BEGIN: 2021-06-18: Telephony: IMS: Add check to properly remove the call extra
 
         Log.v(TelephonyConnection.this, "maybeRemoveAnsweringDropsFgCallExtra removing extra");
         removeExtras(Connection.EXTRA_ANSWERING_DROPS_FG_CALL);
-// QTI_END: 2021-06-19: Telephony: IMS: Add check to properly remove the call extra
+// QTI_END: 2021-06-18: Telephony: IMS: Add check to properly remove the call extra
 // QTI_BEGIN: 2020-11-17: Telephony: IMS: Do not show wrong prompt in case of VT upgrade request.
     }
 
@@ -2102,11 +2070,11 @@ abstract class TelephonyConnection extends Connection implements Holdable,
 // QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
                 call = imsPhone.getForegroundCall().getImsCall();
 // QTI_END: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Check background connections to disable add call option"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Check background connections to disable add call option"
             } else if (imsPhone.getBackgroundCall() != null
                     && imsPhone.getBackgroundCall().getImsCall() != null) {
                 call = imsPhone.getBackgroundCall().getImsCall();
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Check background connections to disable add call option"
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Check background connections to disable add call option"
 // QTI_BEGIN: 2018-02-22: Telephony: IMS-VT: Fix add call option missing issue after ending VT call.
             } else if (imsPhone.getRingingCall() != null
                     && imsPhone.getRingingCall().getImsCall() != null) {
@@ -2121,13 +2089,13 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             isVowifiEnabled = isWfcEnabled(phone);
         }
 
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Check background connections to disable add call option"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Check background connections to disable add call option"
         if (isCurrentVideoCall) {
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Check background connections to disable add call option"
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Check background connections to disable add call option"
             return true;
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "DSDA: Check background connections to disable add call option"
+// QTI_BEGIN: 2025-01-29: Telephony: Revert "DSDA: Check background connections to disable add call option"
         } else if (wasVideoCall && isWifi() && !isVowifiEnabled) {
-// QTI_END: 2025-01-30: Telephony: Revert "DSDA: Check background connections to disable add call option"
+// QTI_END: 2025-01-29: Telephony: Revert "DSDA: Check background connections to disable add call option"
             return true;
         }
         return false;
@@ -2205,12 +2173,10 @@ abstract class TelephonyConnection extends Connection implements Holdable,
     private boolean canHoldImsCalls() {
         PersistableBundle b = getCarrierConfig();
         // Return true if the CarrierConfig is unavailable
-// QTI_BEGIN: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
         return (!doesDeviceRespectHoldCarrierConfig() || b == null ||
                 b.getBoolean(CarrierConfigManager.KEY_ALLOW_HOLD_IN_IMS_CALL_BOOL)) &&
                 ((mOriginalConnection != null && mOriginalConnection.shouldAllowHoldingVideoCall())
                 || !VideoProfile.isVideo(getVideoState()));
-// QTI_END: 2018-03-23: Telephony: IMS-VT: Add support that controls holding a video call
     }
 
     private boolean isConferenceHosted() {
@@ -2355,11 +2321,11 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             for (Connection current : getTelephonyConnectionService().getAllConnections()) {
                 if (current != this && current instanceof TelephonyConnection) {
                     TelephonyConnection other = (TelephonyConnection) current;
-// QTI_BEGIN: 2021-10-12: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
+// QTI_BEGIN: 2021-10-11: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
                     if (getPhone() != null && other.getPhone() != null
                             && (getPhone().getSubId() == other.getPhone().getSubId())
                             && canTransfer(other)) {
-// QTI_END: 2021-10-12: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
+// QTI_END: 2021-10-11: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
                         canConsultativeTransfer = true;
                         break;
                     }
@@ -2434,12 +2400,12 @@ abstract class TelephonyConnection extends Connection implements Holdable,
     @VisibleForTesting(visibility = VisibleForTesting.Visibility.PROTECTED)
     public void hangup(int telephonyDisconnectCode) {
         if (mOriginalConnection != null) {
-// QTI_BEGIN: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_BEGIN: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
             if (mHangupDisconnectCause != DisconnectCause.NOT_VALID) {
                 Log.i(this, "hangup already called once");
                 return;
             }
-// QTI_END: 2020-07-29: Telephony: IMS: Add logic for Pseudo DSDA support
+// QTI_END: 2020-07-28: Telephony: IMS: Add logic for Pseudo DSDA support
             mHangupDisconnectCause = telephonyDisconnectCode;
             try {
                 // Hanging up a ringing call requires that we invoke call.hangup() as opposed to
@@ -2460,7 +2426,9 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                     mOriginalConnection.hangup();
                 }
             } catch (CallStateException e) {
+// QTI_BEGIN: 2025-03-04: Telephony: Reset mHangupDisconnectCause when hangup is rejected in Telephony
                 mHangupDisconnectCause = DisconnectCause.NOT_VALID;
+// QTI_END: 2025-03-04: Telephony: Reset mHangupDisconnectCause when hangup is rejected in Telephony
                 Log.e(this, e, "Call to Connection.hangup failed with exception");
             }
         } else {
@@ -2646,18 +2614,14 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                         updateConnectionCapabilities();
                     }
 // QTI_END: 2020-07-02: Telephony: IMS: Handle add participant support information extra
-// QTI_BEGIN: 2022-04-16: Telephony: CIWLAN: Use extras to trigger update to properties
                     // Also, update the status hints in the case the call has
                     // has moved from cross sim call back to wifi
-// QTI_END: 2022-04-16: Telephony: CIWLAN: Use extras to trigger update to properties
                     mWasCrossSim |= mOriginalConnectionExtras.containsKey(
                                 ImsCallProfile.EXTRA_IS_CROSS_SIM_CALL);
                     if (mWasCrossSim) {
-// QTI_BEGIN: 2022-04-16: Telephony: CIWLAN: Use extras to trigger update to properties
                         updateStatusHints();
                         updateConnectionProperties();
                     }
-// QTI_END: 2022-04-16: Telephony: CIWLAN: Use extras to trigger update to properties
                 } else {
                     Log.d(this, "Extras update not required");
                 }
@@ -2705,20 +2669,16 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         if (mOriginalConnection == null) {
             return;
         }
-// QTI_BEGIN: 2021-03-17: RIL: Update mTreatAsEmergencyCall before using it
 
         TelephonyManager tm = (TelephonyManager) getPhone().getContext()
                 .getSystemService(Context.TELEPHONY_SERVICE);
-// QTI_END: 2021-03-17: RIL: Update mTreatAsEmergencyCall before using it
-// QTI_BEGIN: 2024-06-04: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
+// QTI_BEGIN: 2024-06-03: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
         if (isNetworkIdentifiedEmergencyCall() ||
                 tm.isEmergencyNumber(mOriginalConnection.getAddress())) {
-// QTI_END: 2024-06-04: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
-// QTI_BEGIN: 2021-03-17: RIL: Update mTreatAsEmergencyCall before using it
+// QTI_END: 2024-06-03: Telephony: Set mTreatIsEmergencyCall to true when the call is an emergency call.
             mTreatAsEmergencyCall = true;
         }
 
-// QTI_END: 2021-03-17: RIL: Update mTreatAsEmergencyCall before using it
         Call.State newState;
         // If the state is overridden and the state of the original connection hasn't changed since,
         // then we continue in the overridden state, else we go to the original connection's state.
@@ -2795,9 +2755,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                         }
                     }
 
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
                     if (shouldTreatAsEmergencyCall()
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
                             && (cause
                             == android.telephony.DisconnectCause.EMERGENCY_TEMP_FAILURE
                             || cause
@@ -2807,10 +2765,8 @@ abstract class TelephonyConnection extends Connection implements Holdable,
                         // the state to disconnected and will instead tell the
                         // TelephonyConnectionService to
                         // create a new originalConnection using the new Slot.
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
                         fireOnOriginalConnectionRetryDial(cause
                                 == android.telephony.DisconnectCause.EMERGENCY_PERM_FAILURE);
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
                     } else {
                         int preciseDisconnectCause = CallFailCause.NOT_VALID;
 // QTI_BEGIN: 2018-03-21: Telephony: Display Supplementary Service Notification
@@ -3123,9 +3079,7 @@ abstract class TelephonyConnection extends Connection implements Holdable,
             vtTtySupported = pb.getBoolean(CarrierConfigManager.KEY_CARRIER_VT_TTY_SUPPORT_BOOL);
         }
 // QTI_END: 2020-09-15: Telephony: IMS: Allow VT calls when tty-on
-// QTI_BEGIN: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
         boolean isLocalVideoSupported = (mOriginalConnectionCapabilities
-// QTI_END: 2025-01-30: Telephony: Revert "IMS: Support VT DSDA use cases"
                 & Capability.SUPPORTS_VT_LOCAL_BIDIRECTIONAL)
 // QTI_BEGIN: 2020-09-15: Telephony: IMS: Allow VT calls when tty-on
                 == Capability.SUPPORTS_VT_LOCAL_BIDIRECTIONAL && (vtTtySupported || !mIsTtyEnabled);
@@ -3437,13 +3391,9 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         }
     }
 
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
     private final void fireOnOriginalConnectionRetryDial(boolean isPermanentFailure) {
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
         for (TelephonyConnectionListener l : mTelephonyListeners) {
-// QTI_BEGIN: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
             l.onOriginalConnectionRetry(this, isPermanentFailure);
-// QTI_END: 2019-02-19: Telephony: Revert "IMS: Handle Alternative emergency call response"
         }
     }
 
@@ -3569,22 +3519,18 @@ abstract class TelephonyConnection extends Connection implements Holdable,
         return Collections.unmodifiableMap(result);
     }
 
-// QTI_BEGIN: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
     private boolean isShowingOriginalDialString() {
         boolean showOrigDialString = false;
         Phone phone = getPhone();
         if (phone != null && (phone.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA)
                 && !mOriginalConnection.isIncoming()) {
-// QTI_END: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
             showOrigDialString = getCarrierConfig().getBoolean(CarrierConfigManager
                     .KEY_CONFIG_SHOW_ORIG_DIAL_STRING_FOR_CDMA_BOOL);
             Log.d(this, "showOrigDialString: " + showOrigDialString);
-// QTI_BEGIN: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
         }
         return showOrigDialString;
     }
 
-// QTI_END: 2018-08-30: Telephony: Fix plus sign of country code prefixes can't show on CDMA MO call
     /**
      * Creates a string representation of this {@link TelephonyConnection}.  Primarily intended for
      * use in log statements.
@@ -4294,6 +4240,6 @@ abstract class TelephonyConnection extends Connection implements Holdable,
     public void setEmergencyUrns(@Nullable List<String> emergencyUrns) {
         mEmergencyUrns = emergencyUrns;
     }
-// QTI_BEGIN: 2021-10-12: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
+// QTI_BEGIN: 2021-10-11: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
 }
-// QTI_END: 2021-10-12: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
+// QTI_END: 2021-10-11: Telephony: Add null checks for getPhone() to avoid Null Pointer Exception.
