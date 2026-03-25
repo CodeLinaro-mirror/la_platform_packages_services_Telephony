@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.phone.satellite.entitlement;
 
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
@@ -24,6 +30,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -117,6 +124,11 @@ public class SatelliteEntitlementController extends Handler {
      * @param featureFlags The feature flag.
      */
     public static void make(@NonNull Context context, @NonNull FeatureFlags featureFlags) {
+        if (!context.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_SATELLITE)) {
+            loge("SatelliteEntitlementController is not created.");
+            return;
+        }
         if (sInstance == null) {
             HandlerThread handlerThread = new HandlerThread(TAG);
             handlerThread.start();
