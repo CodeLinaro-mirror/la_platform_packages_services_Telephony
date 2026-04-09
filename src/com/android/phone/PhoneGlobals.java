@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.phone;
 
 import android.annotation.IntDef;
@@ -1477,6 +1483,12 @@ public class PhoneGlobals extends ContextWrapper {
 
     private boolean skipDataRoamingDisconnectedNotificationInSatelliteMode(int subId) {
         SatelliteController satelliteController = SatelliteController.getInstance();
+
+        if (satelliteController == null) {
+            Log.d(LOG_TAG, "The device does not supports Satellite communication.");
+            return false;
+        }
+
         if (satelliteController.isSatelliteEnabledOrBeingEnabled()) {
             Log.d(LOG_TAG, "skipDataRoamingDisconnected - skip notification as "
                     + "satellite is enabled or being enabled");
