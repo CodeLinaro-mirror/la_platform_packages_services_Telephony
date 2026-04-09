@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.phone.settings;
 
 import static android.telephony.SubscriptionManager.INVALID_SUBSCRIPTION_ID;
@@ -98,11 +104,13 @@ public class SatelliteConfigViewer extends Activity {
     private String getSatelliteCarrierConfigUpdateData() {
         logd("getSatelliteCarrierConfigUpdateData");
         HashMap<String, List<Integer>> mapPlmnServiceType = new HashMap<>();
-        List<String> plmnList = mSatelliteController.getSatellitePlmnsForCarrier(mSubId);
-        for (String plmn : plmnList) {
-            List<Integer> listServiceType =
-                    mSatelliteController.getSupportedSatelliteServicesForPlmn(mSubId, plmn);
-            mapPlmnServiceType.put(plmn, listServiceType);
+        if (mSatelliteController != null) {
+            List<String> plmnList = mSatelliteController.getSatellitePlmnsForCarrier(mSubId);
+            for (String plmn : plmnList) {
+                List<Integer> listServiceType =
+                        mSatelliteController.getSupportedSatelliteServicesForPlmn(mSubId, plmn);
+                mapPlmnServiceType.put(plmn, listServiceType);
+            }
         }
         logd("getSatelliteCarrierConfigUpdateData: " + "subId: " + mSubId + ": "
                 + mapPlmnServiceType);
