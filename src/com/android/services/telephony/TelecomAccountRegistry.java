@@ -445,6 +445,10 @@ public class TelecomAccountRegistry {
                 mIsRttCapable = false;
             }
 
+            if (isCarrierRttDowngradeToAudioSupported()) {
+                capabilities |= PhoneAccount.CAPABILITY_CHANGE_RTT_CALL_TO_AUDIO_CALL;
+            }
+
             if (mIsCallComposerCapable) {
                 capabilities |= PhoneAccount.CAPABILITY_CALL_COMPOSER;
             }
@@ -863,6 +867,16 @@ public class TelecomAccountRegistry {
         }
 
         /**
+         * Determines from carrier config whether changing an RTT call to audio-only is supported.
+         */
+        private boolean isCarrierRttDowngradeToAudioSupported() {
+            PersistableBundle b =
+                    PhoneGlobals.getInstance().getCarrierConfigForSubId(mPhone.getSubId());
+            if (b == null) return false;
+            return b.getBoolean(CarrierConfigManager.KEY_RTT_DOWNGRADE_SUPPORTED_BOOL);
+        }
+
+        /**
          * Where a device supports instant lettering and call subjects, retrieves the necessary
          * PhoneAccount extras for those features.
          *
@@ -1239,8 +1253,15 @@ public class TelecomAccountRegistry {
 
             // Any time the SubscriptionInfo changes rerun the setup
             Log.i(this, "TelecomAccountRegistry: onSubscriptionsChanged - update accounts");
-            tearDownAccounts();
-            setupAccounts();
+            if (Flags.rebuildTelecomAccountsAsync()) {
+                mHandler.post(() -> {
+                    tearDownAccounts();
+                    setupAccounts();
+                });
+            } else {
+                tearDownAccounts();
+                setupAccounts();
+            }
         }
 
         @Override
@@ -1252,8 +1273,15 @@ public class TelecomAccountRegistry {
             // Even though registering the listener failed, we will still try to setup the phone
             // accounts now; the phone instances should already be present and ready, so even if
             // telephony registry is poking along we can still try to setup the phone account.
-            tearDownAccounts();
-            setupAccounts();
+            if (Flags.rebuildTelecomAccountsAsync()) {
+                mHandler.post(() -> {
+                    tearDownAccounts();
+                    setupAccounts();
+                });
+            } else {
+                tearDownAccounts();
+                setupAccounts();
+            }
 
             if (mSubscriptionListenerState == LISTENER_STATE_UNREGISTERED) {
                 // Initial registration attempt failed; start exponential backoff.
@@ -1981,8 +2009,7 @@ public class TelecomAccountRegistry {
 
         // Private networks are considered data only for now. Skip them for telecom
         // accounts.
-        if (Flags.skipPrivateNetworkForTelecomAccount()
-                && info.isPrivateNetwork()) {
+        if (info.isPrivateNetwork()) {
             Log.d(this, "setupAccounts: skipping private network subid %d",
                     subscriptionId);
             return true;

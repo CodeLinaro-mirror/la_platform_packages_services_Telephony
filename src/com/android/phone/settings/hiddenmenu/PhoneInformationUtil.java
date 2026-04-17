@@ -15,7 +15,6 @@
  */
 package com.android.phone.settings.hiddenmenu;
 
-import static android.telephony.CarrierConfigManager.KEY_CARRIER_CONFIG_APPLIED_BOOL;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_ROAMING_NTN_CONNECT_TYPE_INT;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_ROAMING_NTN_EMERGENCY_CALL_TO_SATELLITE_HANDOVER_TYPE_INT;
 import static android.telephony.CarrierConfigManager.KEY_CARRIER_ROAMING_SATELLITE_DEFAULT_SERVICES_INT_ARRAY;
@@ -227,7 +226,7 @@ public class PhoneInformationUtil {
         CellSignalStrengthNr ssNr = (CellSignalStrengthNr) ci.getCellSignalStrength();
 
         return String.format(
-                "%-3.3s %-3.3s %-3.3s %-5.5s %-5.5s %-3.3s %-6.6s %-4.4s %-4.4s\n",
+                "%-3.3s %-3.3s %-3.3s %-5.5s %-5.5s %-3.3s %-7.7s %-7.7s %-7.7s\n",
                 getConnectionStatusString(ci),
                 cidNr.getMccString(),
                 cidNr.getMncString(),
@@ -285,7 +284,7 @@ public class PhoneInformationUtil {
                 value +=
                         String.format(
                                 "NR\n%-3.3s %-3.3s %-3.3s %-5.5s %-5.5s %-3.3s"
-                                        + " %-6.6s %-4.4s %-4.4s\n",
+                                        + " %-7.7s %-7.7s %-7.7s\n",
                                 "SRV", "MCC", "MNC", "TAC", "NCI", "PCI", "NRARFCN", "SS-RSRP",
                                 "SS-RSRQ");
                 value += nrCells.toString();
@@ -586,11 +585,11 @@ public class PhoneInformationUtil {
      */
     public static boolean shouldHideNonEmergencyMode(Context context, int mSubId) {
         if (!Build.isDebuggable()) {
-            return false;
+            return true;
         }
         String action = SatelliteManager.ACTION_SATELLITE_START_NON_EMERGENCY_SESSION;
         if (TextUtils.isEmpty(action)) {
-            return false;
+            return true;
         }
         if (mNonEsosIntent != null) {
             mNonEsosIntent = null;
@@ -599,18 +598,18 @@ public class PhoneInformationUtil {
                 context.getSystemService(CarrierConfigManager.class);
         if (carrierConfigManager == null) {
             loge("shouldHideNonEmergencyMode: cm is null");
-            return false;
+            return true;
         }
         android.os.PersistableBundle bundle = carrierConfigManager.getConfigForSubId(mSubId,
                 KEY_SATELLITE_ATTACH_SUPPORTED_BOOL,
                 CarrierConfigManager.KEY_SATELLITE_ESOS_SUPPORTED_BOOL);
         if (!bundle.getBoolean(CarrierConfigManager.KEY_SATELLITE_ESOS_SUPPORTED_BOOL, false)) {
             log("shouldHideNonEmergencyMode: esos_supported false");
-            return false;
+            return true;
         }
         if (!bundle.getBoolean(KEY_SATELLITE_ATTACH_SUPPORTED_BOOL, false)) {
             log("shouldHideNonEmergencyMode: attach_supported false");
-            return false;
+            return true;
         }
 
         String packageName = getStringFromOverlayConfig(context,
@@ -622,17 +621,17 @@ public class PhoneInformationUtil {
         if (packageName == null || className == null || packageName.isEmpty()
                 || className.isEmpty()) {
             log("shouldHideNonEmergencyMode:" + " packageName or className is null or empty.");
-            return false;
+            return true;
         }
         PackageManager pm = context.getPackageManager();
         Intent intent = new Intent(action);
         intent.setComponent(new ComponentName(packageName, className));
         if (pm.queryBroadcastReceivers(intent, 0).isEmpty()) {
             log("shouldHideNonEmergencyMode: Broadcast receiver not found for intent: " + intent);
-            return false;
+            return true;
         }
         mNonEsosIntent = intent;
-        return true;
+        return false;
     }
 
     /**
@@ -767,14 +766,18 @@ public class PhoneInformationUtil {
     public static void configurePhoneSelectionUi(LinearLayout phoneButton0,
             LinearLayout phoneButton1, TextView phoneTitle0, TextView phoneTitle1,
             String[] phoneIndexLabels) {
+        Context context = phoneButton0.getContext();
+        boolean phone0Restricted = isRadioInfoRestricted(context, 0);
+        boolean phone1Restricted = isRadioInfoRestricted(context, 1);
+
         if (phoneIndexLabels.length > 1) {
             phoneTitle0.setText(phoneIndexLabels[0]);
             phoneTitle1.setText(phoneIndexLabels[1]);
-            phoneButton0.setVisibility(View.VISIBLE);
-            phoneButton1.setVisibility(View.VISIBLE);
+            phoneButton0.setVisibility(phone0Restricted ? View.GONE : View.VISIBLE);
+            phoneButton1.setVisibility(phone1Restricted ? View.GONE : View.VISIBLE);
         } else if (phoneIndexLabels.length == 1) {
             phoneTitle0.setText(phoneIndexLabels[0]);
-            phoneButton0.setVisibility(View.VISIBLE);
+            phoneButton0.setVisibility(phone0Restricted ? View.GONE : View.VISIBLE);
             phoneButton1.setVisibility(View.GONE);
         } else {
             phoneButton0.setVisibility(View.GONE);
@@ -1113,6 +1116,71 @@ public class PhoneInformationUtil {
         }
 
         return carrierId + " (" + carrierIdName + ")";
+    }
+
+    public static boolean isUserBuild() {
+        return "user".equals(Build.TYPE);
+    }
+
+    /**
+     * Checks if the RadioInfo access is restricted for a specific phone ID.
+     *
+     * @param context The context.
+     * @param phoneId The phone ID to check configuration for.
+     * @return true if the activity should be disabled for this phone, false otherwise.
+     */
+    public static boolean isRadioInfoRestricted(Context context, int phoneId) {
+        if (!isUserBuild()) return false;
+        int subId = SubscriptionManager.getSubscriptionId(phoneId);
+        // If subId is invalid, we check default config.
+        // If default is false (allowed), then return false.
+        if (!SubscriptionManager.isValidSubscriptionId(subId)) {
+            return false;
+        }
+        return isRadioInfoMenuDisabled(context, subId);
+    }
+
+    /**
+     * Checks if the RadioInfo access is restricted for ANY active phone.
+     * If there are no active phones, it checks the default config.
+     * Returns true if the activity should be restricted (i.e., any SIM is restricted).
+     */
+    public static boolean isRadioInfoAccessRestricted(Context context) {
+        if (!isUserBuild()) return false;
+        TelephonyManager tm = context.getSystemService(TelephonyManager.class);
+        int phoneCount = tm.getActiveModemCount();
+
+        for (int phoneIndex = 0; phoneIndex < phoneCount; phoneIndex++) {
+            int subId = SubscriptionManager.getSubscriptionId(phoneIndex);
+            if (SubscriptionManager.isValidSubscriptionId(subId)) {
+                if (isRadioInfoMenuDisabled(context, subId)) {
+                    // ANY SIM restricted -> Restricted access
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks if RadioInfo and related activities should be disabled on user builds based on
+     * build type and carrier configuration.
+     *
+     * @param context The context.
+     * @param subId The subscription ID to check configuration for.
+     * @return true if the activity should be disabled, false otherwise.
+     */
+    private static boolean isRadioInfoMenuDisabled(Context context, int subId) {
+        CarrierConfigManager configManager = getCarrierConfig(context);
+        if (configManager != null) {
+            PersistableBundle b = configManager.getConfigForSubId(subId);
+            if (b != null) {
+                return b.getBoolean(CarrierConfigManager.KEY_HIDE_RADIO_INFO_ON_USER_BUILD_BOOL,
+                        false);
+            }
+        }
+        return false;
     }
 
     public static PersistableBundle getSatelliteConfigsForSubId(Context context, int subId) {

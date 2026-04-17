@@ -59,6 +59,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ComponentInfo;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.AsyncResult;
 import android.os.Binder;
@@ -161,6 +162,7 @@ import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.stub.ImsConfigImplBase;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.telephony.satellite.EnableRequestAttributes;
+import android.telephony.satellite.EnableResponse;
 import android.telephony.satellite.INtnSignalStrengthCallback;
 import android.telephony.satellite.ISatelliteCapabilitiesCallback;
 import android.telephony.satellite.ISatelliteCommunicationAccessStateCallback;
@@ -2193,9 +2195,12 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 case CMD_PREPARE_UNATTENDED_REBOOT:
                     request = (MainThreadRequest) msg.obj;
                     PinStorage pinStorage = UiccController.getInstance().getPinStorage();
-                    request.result =
-                            pinStorage.prepareUnattendedReboot(request.workSource);
-                    notifyRequester(request);
+                    MainThreadRequest finalRequest = request;
+                    pinStorage.post(() -> {
+                        finalRequest.result =
+                                pinStorage.prepareUnattendedReboot(finalRequest.workSource);
+                        notifyRequester(finalRequest);
+                    });
                     break;
 
                 default:
@@ -2816,15 +2821,23 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 PackageManager.FEATURE_TELEPHONY_CALLING, "getCurrentTtyMode");
         final Phone defaultPhone = getDefaultPhone();
         final long identity = Binder.clearCallingIdentity();
+        int ttyMode = TelephonyManager.TTY_MODE_OFF;
         try {
-            return Settings.Secure.getIntForUser(defaultPhone.getContext().getContentResolver(),
+            ttyMode = Settings.Secure.getIntForUser(defaultPhone.getContext().getContentResolver(),
                     Settings.Secure.PREFERRED_TTY_MODE, defaultPhone.getContext().getUserId());
+            if (ttyMode != TelephonyManager.TTY_MODE_OFF) {
+                AudioManager audioManager = defaultPhone.getContext()
+                        .getSystemService(AudioManager.class);
+                if (audioManager == null || !audioManager.isWiredHeadsetOn()) {
+                    ttyMode = TelephonyManager.TTY_MODE_OFF;
+                }
+            }
         } catch (Settings.SettingNotFoundException e) {
             // Do nothing. TTY_MODE_OFF will be returned below.
         } finally {
             Binder.restoreCallingIdentity(identity);
         }
-        return TelephonyManager.TTY_MODE_OFF;
+        return ttyMode;
     }
 
     @Deprecated
@@ -8280,7 +8293,8 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
             // exact locale (e.g. fr_FR = French/France). So, if the locale returned from
             // the SIM and carrier preferences does not include a country we add the country
             // determined from the SIM MCC to provide an exact locale.
-            final Locale mccLocale = LocaleUtils.getLocaleFromMcc(mApp, mcc, simLanguage);
+            final Locale mccLocale = LocaleUtils.getLocaleFromMccMnc(mApp, mcc,
+                                                                 info.getMncString(), simLanguage);
             if (mccLocale != null) {
                 if (DBG) log("No locale from SIM, using mcc locale:" + mccLocale);
                 return matchLocaleFromSupportedLocaleList(phone, mccLocale);
@@ -12789,15 +12803,21 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
         enforceSatelliteCommunicationPermission("requestSatelliteEnabled");
         final long identity = Binder.clearCallingIdentity();
         try {
+            Log.d(LOG_TAG, "requestEnableSatellite: subId=" + subId
+                    + ", attributes=" + attributes);
             final boolean isAutomaticAndUser = attributes.getConnectType()
                     == CarrierConfigManager.CARRIER_ROAMING_NTN_CONNECT_AUTOMATIC
                     && attributes.getSatelliteEnablementRequestReason()
                     == SatelliteManager.SATELLITE_ENABLEMENT_REQUEST_REASON_USER;
             if (isAutomaticAndUser) {
+                Log.d(LOG_TAG, "requestEnableSatellite: isAutomaticAndUser, calling"
+                        + " requestEnableSatelliteForCarrier");
                 mSatelliteController.requestEnableSatelliteForCarrier(subId,
+                        attributes.isEnabled(),
                         SatelliteManager.SATELLITE_COMMUNICATION_RESTRICTION_REASON_USER,
                         callback);
             } else {
+                Log.d(LOG_TAG, "requestEnableSatellite: falling back to requestSatelliteEnabled");
                 mSatelliteController.requestSatelliteEnabled(
                         attributes.isEnabled(), attributes.isDemoMode(),
                         attributes.isEmergencyMode(), callback);
@@ -12849,9 +12869,12 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
                 // TODO(b/323046234): Migrate to use Auto Satellite Enablement.
                 final Set<Integer> restrictions = mSatelliteController
                         .getAttachRestrictionReasonsForCarrier(subId);
+                Log.d(LOG_TAG, "requestEnableSatelliteStatus: restrictions=" + restrictions);
                 final Bundle bundle = new Bundle();
                 final boolean isSatelliteEnabled = restrictions.isEmpty();
-                bundle.putBoolean(SatelliteManager.KEY_SATELLITE_ENABLED, isSatelliteEnabled);
+                EnableResponse enableResponse = new EnableResponse(
+                        isSatelliteEnabled, false, false, new int[0]);
+                bundle.putParcelable(SatelliteManager.KEY_ENABLE_RESPONSE, enableResponse);
                 result.send(SatelliteManager.SATELLITE_RESULT_SUCCESS, bundle);
             } else {
                 mSatelliteController.requestIsSatelliteEnabled(result);
