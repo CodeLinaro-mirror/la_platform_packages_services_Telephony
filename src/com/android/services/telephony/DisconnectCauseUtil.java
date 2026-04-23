@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+ * Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.services.telephony;
 
 import android.content.Context;
@@ -1369,7 +1375,8 @@ public class DisconnectCauseUtil {
     }
 
     private static Integer getSatelliteErrorString() {
-        if (SatelliteController.getInstance().isSatelliteEnabledOrBeingEnabled()) {
+        if (SatelliteController.getInstance() != null
+                && SatelliteController.getInstance().isSatelliteEnabledOrBeingEnabled()) {
             return R.string.incall_error_satellite_enabled;
         }
         return R.string.incall_error_carrier_roaming_satellite_mode;
