@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Binder;
@@ -110,6 +111,11 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
 
     private static final SimpleDateFormat TIME_FORMAT =
             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+
+    private static final Set<String> OVERRIDE_BLOCKLIST_ON_USER_BUILD = Set.of(
+            CarrierConfigManager.KEY_SATELLITE_ENTITLEMENT_SUPPORTED_BOOL,
+            CarrierConfigManager.KEY_SATELLITE_DATA_SUPPORT_MODE_INT
+    );
 
     // Package name for platform carrier config app, bundled with system image.
     @NonNull private final String mPlatformCarrierConfigPackage;
@@ -1492,11 +1498,48 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
         return configSubset;
     }
 
+    private void secureOverrideConfig(@Nullable PersistableBundle overrides, boolean persistent) {
+        // Do not allow shell UID to override the carrier config. This will not impact
+        // the CTS and telephony shell commands as they use different uids
+        if (TelephonyPermissions.isShell(getCallingUid())) {
+            throw new SecurityException("overrideConfig cannot be invoked by shell");
+        }
+
+        final long token = Binder.clearCallingIdentity();
+        try {
+            TelephonyManager tm = mContext.getSystemService(TelephonyManager.class);
+            String modemService = tm.getModemService();
+            logd("modemService=" + modemService);
+            boolean isMockModemService =
+                    "android.telephony.mockmodem.MockModemService".equals(modemService);
+
+            // Do not allow blocklisted keys to be overridden when device is connected
+            // to a real modem.
+            if (isUserBuild() && overrides != null && !isMockModemService) {
+                for (String key : OVERRIDE_BLOCKLIST_ON_USER_BUILD) {
+                    if (overrides.containsKey(key)) {
+                        throw new SecurityException("Overriding " + key
+                                + " is not allowed on user builds.");
+                    }
+                }
+            }
+        } finally {
+            Binder.restoreCallingIdentity(token);
+        }
+
+        if (persistent && isUserBuild() && !isSystemApp()) {
+            throw new SecurityException("overrideConfig with persistent=true only can be "
+                    + "invoked by system app");
+        }
+    }
+
     @android.annotation.EnforcePermission(android.Manifest.permission.MODIFY_PHONE_STATE)
     @Override
     public void overrideConfig(int subscriptionId, @Nullable PersistableBundle overrides,
             boolean persistent) {
         overrideConfig_enforcePermission();
+        secureOverrideConfig(overrides, persistent);
+
         int phoneId = SubscriptionManager.getPhoneId(subscriptionId);
         if (!SubscriptionManager.isValidPhoneId(phoneId)) {
             logd("Ignore invalid phoneId: " + phoneId + " for subId: " + subscriptionId);
@@ -1531,6 +1574,26 @@ public class CarrierConfigLoader extends ICarrierConfigLoader.Stub {
                     + persistent + ", overrides=" + overrides);
             updateSubscriptionDatabase(phoneId);
         });
+    }
+
+    private boolean isSystemApp() {
+        try {
+            String callingPackage = mContext.getPackageManager().getNameForUid(
+                    Binder.getCallingUid());
+
+            ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
+                    callingPackage, 0);
+            return (appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0
+                    || (appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
+        } catch (Exception e) {
+            loge("isSystemApp: failed to get application info: " + e);
+            return false;
+        }
+    }
+
+    @VisibleForTesting
+    public boolean isUserBuild() {
+        return "user".equals(android.os.Build.TYPE);
     }
 
     private void overrideConfig(@NonNull PersistableBundle[] currentOverrides, int phoneId,
