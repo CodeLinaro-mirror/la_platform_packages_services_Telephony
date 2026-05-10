@@ -238,6 +238,19 @@ public class TelephonyConnectionService extends ConnectionService {
 
     private ImsConferenceController mImsConferenceController;
 
+    /**
+     * Determines if there is an active conference call for the given phone account handle.
+     *
+     * @param handle The phone account handle.
+     * @return {@code true} if there is an active conference call, {@code false} otherwise.
+     */
+    public boolean isConferenceActive(PhoneAccountHandle handle) {
+        if (mImsConferenceController != null) {
+            return mImsConferenceController.hasActiveConference(handle);
+        }
+        return false;
+    }
+
     private ComponentName mExpectedComponentName = null;
     private RadioOnHelper mRadioOnHelper;
     private EmergencyTonePlayer mEmergencyTonePlayer;
@@ -1371,6 +1384,7 @@ public class TelephonyConnectionService extends ConnectionService {
                         && (imsPhone == null || !imsPhone.canMakeWifiCall())) {
                     Log.d(this, "onCreateOutgoingConnection, cannot make call "
                             + "when device is connected to carrier roaming satellite network");
+                    mSatelliteController.onNonEmergencyDialerDialogDisplayed(phone);
                     return Connection.createFailedConnection(
                             mDisconnectCauseFactory.toTelecomDisconnectCause(
                                     android.telephony.DisconnectCause.SATELLITE_ENABLED,
@@ -3074,6 +3088,14 @@ public class TelephonyConnectionService extends ConnectionService {
             Log.i(this, "maybeReselectDomain endCall()");
             c.removeTelephonyConnectionListener(mEmergencyConnectionListener);
             releaseEmergencyCallDomainSelection(false, false);
+            mEmergencyStateTracker.endCall(c);
+            return false;
+        } else if (mFeatureFlags.enforceEmergencyExitMultiCall()
+                && mEmergencyStateTracker != null
+                && mEmergencyStateTracker.hasActiveCall(c)) {
+            Log.i(this, "maybeReselectDomain: unmanaged active emergency call disconnected, "
+                    + "ending call in tracker");
+            c.removeTelephonyConnectionListener(mEmergencyConnectionListener);
             mEmergencyStateTracker.endCall(c);
             return false;
         }
