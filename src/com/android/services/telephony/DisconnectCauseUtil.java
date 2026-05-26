@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+/*
+​​ * ​​​Changes from Qualcomm Technologies, Inc. are provided under the following license:
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
+ * SPDX-License-Identifier: BSD-3-Clause-Clear
+ */
+
 package com.android.services.telephony;
 
 import android.content.Context;
@@ -164,7 +170,8 @@ public class DisconnectCauseUtil {
                 .setLabel(toTelecomDisconnectCauseLabel(context, telephonyDisconnectCause,
                         telephonyPreciseDisconnectCause, carrierConfig, featureFlags))
                 .setDescription(toTelecomDisconnectCauseDescription(
-                        context, telephonyDisconnectCause, phoneId, shouldTreatAsEmergency))
+                        context, telephonyDisconnectCause, phoneId, shouldTreatAsEmergency,
+                        carrierConfig))
                 .setReason(toTelecomDisconnectReason(
                         context, telephonyDisconnectCause, reason, phoneId))
                 .setTone(toTelecomDisconnectCauseTone(
@@ -284,6 +291,7 @@ public class DisconnectCauseUtil {
 // QTI_BEGIN: 2021-08-12: Telephony: IMS: Add support for additional call information
             case android.telephony.DisconnectCause.CONCURRENT_CALLS_NOT_POSSIBLE:
 // QTI_END: 2021-08-12: Telephony: IMS: Add support for additional call information
+            case android.telephony.DisconnectCause.NARROWBAND_TERRESTRIAL_NETWORK:
                 return DisconnectCause.ERROR;
 
             case android.telephony.DisconnectCause.DIALED_MMI:
@@ -371,6 +379,10 @@ public class DisconnectCauseUtil {
             if (doesCarrierClassifyDisconnectCauseAsBusyCause(telephonyDisconnectCause,
                     carrierConfig)) {
                 return context.getResources().getString(R.string.callFailed_userBusy);
+            }
+            if (doesCarrierClassifyDisconnectCauseAsNetworkBusyCause(telephonyDisconnectCause,
+                    carrierConfig)) {
+                return context.getResources().getString(R.string.callFailed_NetworkBusy);
             }
             label = getLabelFromDisconnectCause(context, telephonyDisconnectCause);
         }
@@ -526,6 +538,9 @@ public class DisconnectCauseUtil {
                 resourceId = R.string.callFailed_concurrent_calls_not_possible;
                 break;
 // QTI_END: 2021-08-12: Telephony: IMS: Add support for additional call information
+            case android.telephony.DisconnectCause.NARROWBAND_TERRESTRIAL_NETWORK:
+                resourceId = R.string.callFailed_narrowband_terrestrial_network;
+                break;
             default:
                 break;
         }
@@ -724,9 +739,14 @@ public class DisconnectCauseUtil {
      */
     private static CharSequence toTelecomDisconnectCauseDescription(
             Context context, int telephonyDisconnectCause, int phoneId,
-            boolean shouldTreatAsEmergency) {
+            boolean shouldTreatAsEmergency, PersistableBundle carrierConfig) {
         if (context == null ) {
             return "";
+        }
+
+        if (doesCarrierClassifyDisconnectCauseAsNetworkBusyCause(telephonyDisconnectCause,
+                carrierConfig)) {
+            return context.getResources().getString(R.string.callFailed_NetworkBusy);
         }
 
         Integer resourceId = null;
@@ -1181,6 +1201,9 @@ public class DisconnectCauseUtil {
                 resourceId = R.string.callFailed_concurrent_calls_not_possible;
                 break;
 // QTI_END: 2021-08-12: Telephony: IMS: Add support for additional call information
+            case android.telephony.DisconnectCause.NARROWBAND_TERRESTRIAL_NETWORK:
+                resourceId = R.string.callFailed_narrowband_terrestrial_network;
+                break;
             default:
                 break;
         }
@@ -1312,6 +1335,28 @@ public class DisconnectCauseUtil {
         for (int busyTone : busyToneArray) {
             if (busyTone == telephonyDisconnectCause) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Helper method that examines the carrierConfig KEY_DISCONNECT_CAUSE_NETWORK_BUSY_INT_ARRAY
+     * containing the DisconnectCauses that are classified as Network Busy.
+     */
+    @VisibleForTesting(visibility = VisibleForTesting.Visibility.PACKAGE)
+    public static boolean doesCarrierClassifyDisconnectCauseAsNetworkBusyCause(
+            int telephonyDisconnectCause, PersistableBundle carrierConfig) {
+        if (carrierConfig == null) {
+            return false;
+        }
+        int[] networkBusyArray = carrierConfig.getIntArray(
+                CarrierConfigManager.KEY_DISCONNECT_CAUSE_NETWORK_BUSY_INT_ARRAY);
+        if (networkBusyArray != null) {
+            for (int networkBusy : networkBusyArray) {
+                if (networkBusy == telephonyDisconnectCause) {
+                    return true;
+                }
             }
         }
         return false;

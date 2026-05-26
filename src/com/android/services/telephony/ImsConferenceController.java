@@ -301,6 +301,18 @@ public class ImsConferenceController {
                 }
             }
         }
+
+       for (ImsConference conference : mImsConferences) {
+            if (conference.getState() != Connection.STATE_DISCONNECTED) {
+                PhoneAccount pa = tm.getPhoneAccount(conference.getPhoneAccountHandle());
+                if (pa != null && pa.hasSimultaneousCallingRestriction()) {
+                    if (pa.getSimultaneousCallingRestriction().isEmpty()) {
+                        return conference.getPhoneAccountHandle();
+                    }
+                }
+           }
+        }
+
         return null;
     }
 
