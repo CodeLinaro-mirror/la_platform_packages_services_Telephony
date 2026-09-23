@@ -19,6 +19,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.os.Process;
@@ -495,6 +496,19 @@ public class GsmUmtsCallForwardOptions extends TimeConsumingPreferenceActivity
             Log.d(LOG_TAG, "onActivityResult: contact picker result not OK.");
             return;
         }
+
+        if (data == null) {
+            Log.w(LOG_TAG, "onActivityResult: data is null");
+            return;
+        }
+
+        Uri contactUri = data.getData();
+        if (contactUri == null) {
+            Log.w(LOG_TAG, "onActivityResult: contactUri is null");
+            return;
+        }
+        ContactPermissionUtils.checkContactUriPermission(data, contactUri);
+
         Log.w(LOG_TAG, "onActivityResult: skipping contact picker result since this"
                 + " functionality is no longer supported.");
     }
