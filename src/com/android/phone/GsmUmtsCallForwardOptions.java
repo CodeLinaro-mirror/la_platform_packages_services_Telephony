@@ -4,6 +4,7 @@ import android.app.ActionBar;
 import android.content.ContentProvider;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 import android.os.Process;
@@ -208,18 +209,31 @@ public class GsmUmtsCallForwardOptions extends TimeConsumingPreferenceActivity {
             Log.d(LOG_TAG, "onActivityResult: contact picker result not OK.");
             return;
         }
+
+        if (data == null) {
+            Log.w(LOG_TAG, "onActivityResult: data is null");
+            return;
+        }
+
+        Uri contactUri = data.getData();
+        if (contactUri == null) {
+            Log.w(LOG_TAG, "onActivityResult: contactUri is null");
+            return;
+        }
+        ContactPermissionUtils.checkContactUriPermission(data, contactUri);
+
         Cursor cursor = null;
         try {
             // check if the URI returned by the user belongs to the user
             final int currentUser = UserHandle.getUserId(Process.myUid());
             if (currentUser
-                    != ContentProvider.getUserIdFromUri(data.getData(), currentUser)) {
+                    != ContentProvider.getUserIdFromUri(contactUri, currentUser)) {
 
                 Log.w(LOG_TAG, "onActivityResult: Contact data of different user, "
                         + "cannot access");
                 return;
             }
-            cursor = getContentResolver().query(data.getData(),
+            cursor = getContentResolver().query(contactUri,
                 NUM_PROJECTION, null, null, null);
             if ((cursor == null) || (!cursor.moveToFirst())) {
                 Log.d(LOG_TAG, "onActivityResult: bad contact data, no results found.");
